@@ -1,5 +1,9 @@
 :root {
 	--text-color: #bfbfbf;
+	--lighter-text-color: #919191;
+	--background-color: #1c1c1c;
+	--post-background-color: #444;
+	--link-color: #5992b5;
 }
 
 body{
@@ -9,12 +13,12 @@ body{
 	font-size:18px;
 	padding:0 10px;
 	color: var(--text-color);
-	background: #1c1c1c;
+	background: var(--background-color);
 }
 
 a {
     text-decoration: none;
-    color: #5992b5;
+    color: var(--link-color);
 }
 
 img {
@@ -42,7 +46,7 @@ img {
     margin: 10px;
 	padding: 6px;
 	height: max-content;
-	background-color: #444;
+	background-color: var(--post-background-color);
 	border-radius: 5px;
 }
 
@@ -59,7 +63,7 @@ img {
 }
 
 .post{
-	background-color: #444;
+	background-color: var(--post-background-color);
 	padding: 10px;
 	border-radius: 10px;
 	margin: 5px;
@@ -80,7 +84,7 @@ img {
 }
 
 .postDate {
-    color: #919191;
+    color: var(--lighter-text-color);
     font-size: 14px;
 }
 

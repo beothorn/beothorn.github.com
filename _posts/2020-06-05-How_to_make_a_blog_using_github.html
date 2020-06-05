@@ -1,0 +1,97 @@
+---
+title: How to make a blog using github
+layout: singlePost
+comments: true
+---
+<h2>Hosting a blog on github using github pages</h2>
+
+<h3>Why</h3>
+<p>
+    You probably have already seen some software page hosted from github itself. 
+    This is a nice feature offered by github called <a href="https://pages.github.com/">github pages</a> that
+    basically allow you to host static content and serve it as a regular website.
+</p>
+<p>
+    But that's not all of it. Github pages also has support for <a href="https://jekyllrb.com/">Jekyll</a>, a static 
+    web site generator.
+</p>
+<p>
+    Blogger and other platforms give you many tools, but they add an overhead if you want to do anything more advanced than text.
+</p>
+<p>
+    Using Jekyll and github pages, each post is a raw html file, and besides that 
+    you get a blog that is easy to backup and move elsewhere, if you must.
+</p>
+<p>
+    I tried to create the simplest possible theme for a blog (this one you are reading) and I will 
+    walk you through on how to reuse it for yourself.
+</p>
+
+<h3>What you will need</h3>
+<p>
+    Some knowledge of git and html or markdown. I intend to maybe in the future write an app to commit the post 
+    files so even this is not required but I digress.
+</p>
+<h3>Forking the repo</h3>
+<p>First step is to fork this repo. But instead of using the fork function on github, 
+    we will clone the repo and re-commit it.</p>
+<p>This way you can do it as many times as we want for the same repository</p>
+<p>You need to have a repository, so for our example let's create YOUR_BLOG</p>
+<p>You can also create a repo YOUR_USER.github.com which will result in a sligthly different url.</p>
+<p>On your commandline do:</p>
+<p>git clone git@github.com:beothorn/SimpleGithubBlog.git</p>
+<p>mv SimpleGithubBlog YOUR_BLOG</p>
+<p>cd YOUR_BLOG</p>
+<p>git remote set-url origin git@github.com:YOUR_USER/YOUR_BLOG.git</p>
+<p>git push</p>
+<p>Now you need to enable github pages on the master branch. On your repository go to Settings>Github Pages</p>
+<p>Now on Source chose Master</p>
+<img src="/assets/img/blogTutorial/enableGithubPages.png"/>
+<p>Now access http://YOUR_USER.github.io/YOUR_BLOG , or if you used your own name just http://YOUR_USER.github.io/</p>
+<p>You should already see your blog.</p>
+
+<h3>Changing the blogs name</h3>
+
+<p>Now let's change the title of this blog to yours.</p>
+<p>Open _config.yml you should see:</p>
+<pre>
+name: YOUR_BLOG
+description: Your blog with interesting articles
+url: http://YOUR_USER.github.io/YOUR_BLOG
+</pre>
+<p>name will be the title displayed on the header</p>
+<p>description and url will be used to fill the rss feed at http://YOUR_USER.github.io/YOUR_BLOG/feed.xml</p>
+
+<h3>Changing the color theme</h3>
+<p>Open styles.css at the project root folder, you should see the color values that you can customize as you wish:</p>
+<pre>
+:root {
+    --text-color: #bfbfbf;
+    --lighter-text-color: #919191;
+    --background-color: #1c1c1c;
+    --post-background-color: #444;
+    --link-color: #5992b5;
+}
+</pre>
+
+<h3>Adding and removing posts</h3>
+
+<p>With Jekyll, each post is a file under the _posts folder. Posts can be markdown or html.</p>
+<p>The file must have the format Year-Month-Day-PostTitle.md for markdown Year-Month-Day-PostTitle.html for HTML.</p>
+<p>There is already two example posts there, opening any of them you will see that before the actual post you have:</p>
+<pre>
+---
+title: A Koch Island written in javascript
+layout: singlePost
+comments: true
+---
+</pre>
+<p>This section is the Jekyll "Front Matter" and is required. This is a snippet of YAML and is used to set some variables</p>
+<p>First one is the title of the post, it shows on the left menu and also on the rss feed</p>
+<p>Second is the layout, you can check the layouts under the _layouts folder. Just keep it like that</p>
+<p>For last "comments" tells wether or not <a href="https://disqus.com/">Disqus</a> comments should be enabled for this post</p>
+<p><a href="https://disqus.com/">Disqus</a> comments can be configured selecting 
+    <a href="https://disqus.com/profile/signup/intent/">"I want to install Disqus on my site" here</a></p>
+<p>You can also enable or disable it per post, just set the variable to false</p>
+<p>After that, you can write your post with the language you have chosen. 
+    Then just commit it and github will process and publish your blog.</p>
