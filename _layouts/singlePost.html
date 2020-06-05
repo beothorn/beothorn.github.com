@@ -5,7 +5,7 @@ layout: main
 	<h1 class="postTitle"><a class="postTitleLink" href="{{ page.url }}">{{ page.title }}</a></h1>
 	<span class="postDate">{{ page.date | date:"%Y-%m-%d" }}</span>
 	<div class="postText">{{ content }} </div>
-	<div class="PageNavigation">
+	<div class="postNavigation">
 		{% if page.previous.url %}
 			<a class="prev" href="{{page.previous.url}}">&laquo; {{page.previous.title}}</a>
 		{% endif %}

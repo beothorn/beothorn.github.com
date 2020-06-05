@@ -92,3 +92,16 @@ img {
 	margin-top: 20px;
 	margin-bottom: 50px;
 }
+
+.postNavigation{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.prev {
+    justify-self: start;
+}
+
+.next {
+    justify-self: end;
+}
