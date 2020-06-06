@@ -4,6 +4,8 @@
 	--background-color: #1c1c1c;
 	--post-background-color: #444;
 	--link-color: #5992b5;
+	--code-snippet-background: white;
+	--code-snippet-text: #111;
 }
 
 body{
@@ -24,6 +26,13 @@ a {
 img {
 	width: 100%;
 	height: auto;
+}
+
+pre {
+    background: var(--code-snippet-background);
+    color: var(--code-snippet-text);
+    padding: 15px;
+    border: solid 2px gray;
 }
 
 .icon {
