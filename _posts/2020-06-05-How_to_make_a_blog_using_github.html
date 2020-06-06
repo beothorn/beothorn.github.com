@@ -36,11 +36,13 @@ comments: true
 <p>You need to have a repository, so for our example let's create YOUR_BLOG</p>
 <p>You can also create a repo YOUR_USER.github.com which will result in a sligthly different url.</p>
 <p>On your commandline do:</p>
-<p>git clone git@github.com:beothorn/SimpleGithubBlog.git</p>
-<p>mv SimpleGithubBlog YOUR_BLOG</p>
-<p>cd YOUR_BLOG</p>
-<p>git remote set-url origin git@github.com:YOUR_USER/YOUR_BLOG.git</p>
-<p>git push</p>
+<pre>
+    git clone git@github.com:beothorn/SimpleGithubBlog.git
+    mv SimpleGithubBlog YOUR_BLOG
+    cd YOUR_BLOG
+    git remote set-url origin git@github.com:YOUR_USER/YOUR_BLOG.git
+    git push
+</pre>
 <p>Now you need to enable github pages on the master branch. On your repository go to Settings>Github Pages</p>
 <p>Now on Source choose Master</p>
 <img src="/assets/img/blogTutorial/enableGithubPages.png"/>
@@ -79,7 +81,7 @@ url: http://YOUR_USER.github.io/YOUR_BLOG
 <p>There is already two example posts there, opening any of them you will see that before the actual post you have:</p>
 <pre>
 ---
-title: A Koch Island written in javascript
+title: Markdown example
 layout: singlePost
 comments: true
 ---
