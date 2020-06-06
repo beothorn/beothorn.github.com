@@ -4,8 +4,8 @@
 	--background-color: #1c1c1c;
 	--post-background-color: #444;
 	--link-color: #5992b5;
-	--code-snippet-background: white;
-	--code-snippet-text: #111;
+	--code-snippet-background: black;
+	--code-snippet-text: #00ff1c;
 }
 
 body{
@@ -32,7 +32,7 @@ pre {
     background: var(--code-snippet-background);
     color: var(--code-snippet-text);
     padding: 15px;
-    border: solid 2px gray;
+    border: solid 2px #272727;
 }
 
 .icon {
