@@ -34,7 +34,7 @@ pre {
     color: var(--code-snippet-text);
     padding: 15px;
 	border: solid 2px #272727;
-	overflow: scroll;
+	overflow: auto;
 }
 
 .icon {
