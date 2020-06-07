@@ -1,0 +1,37 @@
+---
+title: Image compositor for android
+layout: singlePost
+comments: true
+---
+<p>This is an idea I want to work on.</p>
+<p>One really cool tool on <a href="https://www.blender.org">Blender - the 3D editor</a> is the compositor</p>
+<p>The compositor is a pipeline for manipulating things like textures, normals, vectors and all other sorts of values.</p>
+<p>One way to use it is to apply trasnformations to the final resulting image after it was already rendered.</p>
+<p>For example, say you want to take the final render, blur it and remix it again with the render, you would have something like this:</p>
+<img src="/assets/img/filterious/blenderCompositor.png"/>
+<p>There are some advantages on creating a pipeline instead of applying the transformations with an editor.</p>
+<ul>
+    <li>Changes are non-destructive</li>
+    <li>The pipeline can be reused</li>
+</ul>
+<p>Also a visual editor is really fitting for this kind of solution.</p>
+<p>Now for the second part of the idea: another really, really cool piece of tech is style transfer.</p>
+<p>Style transfer is a technique that uses machine learning to apply a style to an image. One app that does this, 
+    for example, is the <a href="https://play.google.com/store/apps/details?id=com.neuralprisma">Prisma photo editor</a></p>
+<p>Applying different transfer in succession can lead to some interesting results.</p>
+<p>Although Prisma is an app available for android, there is nothing similar to the blender compositor available in an app form.</p>
+<p>Combining those two ideas we could have a compositing app with some nodes on the pipeline that actually do the processing on some server.</p>
+<p>Those nodes could do style transfer.</p>
+<p>Not only that, with these transformations being done on the server we could have nodes that select faces, objects or maybe redirects the 
+    flow depending on the content of the image.
+</p>
+<p>
+    Since the pipeline are just descriptions of the nodes and the parameters, it would be also trivial to save them and share them.
+</p>
+<p>
+    A nice term for refering the pipelines can be filters, as editing the pipeline is not really necessary for a casual user, and 
+    the term is already coined.
+</p>
+<p>
+    I started experimenting with the idea <a href="https://github.com/beothorn/filterious">here</a>
+</p>
