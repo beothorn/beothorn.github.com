@@ -1,0 +1,74 @@
+---
+title: Connecting my echo dot to a raspberry pi 3
+layout: singlePost
+comments: true
+---
+<p>Recently I wanted to connect my echo dot 3rd gen to a node-red server inside a raspberry pi 3.</p>
+<p>The best solution looks like setting up a nodered server and then configuring it to listen to my echo inside my local network.</p>
+<p>There were some issues I've ran into and hopefully this guide is usefull for you.</p>
+<p>First, set up the server by following the <a href="https://nodered.org/docs/getting-started/raspberrypi">official</a> guide.</p>
+<p>After installing node-red, install the <a href="https://github.com/datech/node-red-contrib-amazon-echo">node-red-contrib-amazon-echo</a> pallete.</p>
+<p>To do this connect to your node-red instance at <a href="http://localhost:1880">http://localhost:1880</a> an click on the menu icon on the right upper part.</p>
+<p>Then choose "Manage pallete", click on the "install" tab and search for node-red-contrib-amazon-echo</p>
+<p>Click on istall</p>
+<p>Inside input you will see two new nodes "amazon echo hub" and "amazon echo device"</p>
+<p>The basic setup is one "amazon echo hub" that connects to a "amazon echo device" and the on any other node, for now let's use a common/debug node</p>
+<p>For "amazon echo hub" double click to edit properties. Change the port to 8080.</p>
+<p>For "amazon echo device" double click to edit properties and give it a name. This will be the name you will call with alexa.</p>
+<p>Connect "amazon echo device" to the debug node.</p>
+<p>Click on the "deploy" button on the upper part</p>
+<p>Unfortunately echo 3rd generation expects your device to be listening to port 80, but unless you are running nodered as sudo you will 
+    not have the rights to expose port 80.</p>
+<p>The solution is to redirect from port 80 to 8080 using iptables.</p>
+<p>And since we want the iptables rules to be persisted, we need to install iptables-persistent</p>
+<p>First run:</p>
+<pre>
+sudo apt-get install iptables-persistent
+</pre>
+<p>Then copy these rules:</p>
+<pre>
+*nat
+
+-A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
+
+COMMIT
+
+*filter
+
+-I INPUT 1 -p tcp --dport 80 -j ACCEPT
+
+COMMIT
+</pre>
+<p>Write them on this file:</p>
+<pre>
+sudo nano /etc/iptables.test.rules
+</pre>
+
+<p>Now execute and save the rules:</p>
+<pre>
+sudo iptables-restore < /etc/iptables.test.rules
+sudo sh -c 'iptables-save > /etc/iptables.up.rules'
+</pre>
+<p>And lastly, copy this</p>
+<pre>
+#!/bin/sh
+/sbin/iptables-restore < /etc/iptables.up.rules
+</pre>
+<p>And paste it into this file to reload the rules when restarting your raspberry pi</p>
+<pre>
+sudo nano /etc/network/if-pre-up.d/iptables
+</pre>
+<p>And make the file executable:</p>
+<pre>
+sudo chmod +x /etc/network/if-pre-up.d/iptables
+</pre>
+
+<p>Now just ask alexa to look for devices and a new device with the name from the node "amazon echo device" should show up</p>
+<p>Commands like "Alexa, turn on deviceName" will show up on your debug node</p>
+
+
+
+Links:
+<a href="http://www.intellamech.com/RaspberryPi-projects/rpi_iptables.html"></a>
+<a href="https://www.raspberrypi.org/forums/viewtopic.php?t=167469"></a>
+<a href="https://www.youtube.com/watch?v=4QfoXdcfqKI"></a>
