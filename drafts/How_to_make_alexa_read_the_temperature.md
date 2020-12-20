@@ -56,6 +56,11 @@ Then from a browser on the same network access http://192.168.0.31:1880/ (use th
 
 If you see this:
 
-IMG
+![Starting node red](/assets/img/startNodeRed.png)
 
 You are ready to continue.
+
+## Setup Alexa
+
+To be able to send messages for your alexa to read follow [this tutorial](/2020/11/05/Redirect_rasp_pi_port.html)
+
