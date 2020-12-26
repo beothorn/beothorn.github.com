@@ -62,5 +62,24 @@ You are ready to continue.
 
 ## Setup Alexa
 
-To be able to send messages for your alexa to read follow [this tutorial](/2020/11/05/Redirect_rasp_pi_port.html)
+You will need to create a fake device so you can listen to alexa turn on commands.
 
+To be able to receive commands from your alexa to turn on a device follow [this tutorial](/2020/11/05/Redirect_rasp_pi_port.html)
+
+## Setup arduino
+
+<script src="https://gist.github.com/beothorn/d62ada134b78c137c32953071d01a6ed.js"></script>
+
+https://gist.githubusercontent.com/beothorn/d62ada134b78c137c32953071d01a6ed/raw/59e764c92dd520ec81ec9e3306fc170b0203eef0/TempAndHumidityKY015.c
+
+## Schedule continuous temperature reading
+
+<script src="https://gist.github.com/beothorn/f2fdbe3a3121ffff66275fedc4bd0d0b.js"></script>
+
+https://gist.githubusercontent.com/beothorn/f2fdbe3a3121ffff66275fedc4bd0d0b/raw/d972f1d08bd809027e242f9b6095807955be87ba/readTemp.py
+
+## Login on amazon 
+
+## Links
+
+[How to setup alexa to say something](https://peyanski.com/alexa-tts-how-to/)
