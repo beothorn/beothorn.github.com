@@ -6,14 +6,14 @@
 	--link-color: #5992b5;
 	--code-snippet-background: black;
 	--code-snippet-text: #00ff1c;
+	--border-rad: 0.5rem;
 }
 
 body{
-	margin:40px auto;
-	max-width:1200px;
-	line-height:1.6;
-	font-size:18px;
-	padding:0 10px;
+	margin: 2rem auto;
+	max-width: 70rem;
+	line-height: 1.6;
+	font-size: 1rem;
 	color: var(--text-color);
 	background: var(--background-color);
 	background-image: url("/assets/img/prism/prism.png");
@@ -32,14 +32,15 @@ img {
 pre {
     background: var(--code-snippet-background);
     color: var(--code-snippet-text);
-    padding: 15px;
-	border: solid 2px #272727;
+    padding: 1rem;
 	overflow: auto;
 }
 
-.icon {
-	width: 32px;
-	height: auto;
+.icon-right-side {
+	width: 2rem;
+    height: auto;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
 }
 
 #middle{
@@ -54,11 +55,13 @@ pre {
 }
 
 #sideRight {
-    margin: 10px;
-	padding: 6px;
+	margin-left: 0.6rem;
+	margin-right: 0.6rem;
+	margin-bottom: 0.6rem;
+    padding: 0.3rem;
 	height: max-content;
 	background-color: var(--post-background-color);
-	border-radius: 5px;
+	border-radius: var(--border-rad);
 }
 
 #blogTitle {
@@ -82,12 +85,9 @@ pre {
 .post{
 	background-color: var(--post-background-color);
 	padding: 10px;
-	border-radius: 10px;
-	margin: 5px;
+	border-radius: var(--border-rad);
     margin-bottom: 5px;
 	margin-bottom: 30px;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.78);
-	text-shadow: 0 1px 2px rgb(0, 0, 0);
 }
 
 .postTitleLink {
@@ -98,7 +98,8 @@ pre {
 }
 
 .postTitle {
-	margin-bottom: 0px;
+	margin-bottom: 0;
+    margin-top: 0;
 }
 
 .postDate {
@@ -122,4 +123,15 @@ pre {
 
 .next {
     justify-self: end;
+}
+
+footer {
+	display: flex;
+	align-items:center;
+	padding-left: 1.1rem;
+}
+
+.icon-footer {
+	width: 2rem;
+    height: auto;
 }
