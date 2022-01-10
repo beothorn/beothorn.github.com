@@ -1,0 +1,114 @@
+---
+title: Patching an elf binary using Ghidra
+layout: singlePost
+comments: true
+---
+<p>On this post I will give a simple step by step on how to use 
+    <a href="https://ghidra-sre.org/">Ghidra</a> to
+    disassemble an elf binary on linux and patch it so we can bypass an if condition.</p> 
+
+<p>First let's write a simple program in c that outputs a message
+    if the arguments matches a certain string:
+</p>
+
+<pre>
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char** argv){
+    if (argc != 2) {
+        printf("Please inform the password\n");
+        return -1;
+    }
+    if (strcmp(argv[1], "password") == 0) {
+        printf("Correct!\n");
+    } else {
+        printf("Wrong password\n");
+    }
+    return 0;
+} 
+</pre>
+
+<p>Copy and paste this code to a file called main.c then compile it using:</p>
+
+<pre>gcc main.c -o myPass</pre>
+
+<p>And running the compiled executable should give you these outputs:</p>
+
+<pre>
+➜ ./myPass 
+Please inform the password
+➜ ./myPass pass
+Wrong password
+➜ ./myPass password
+Correct!    
+</pre>
+
+<p>Our goal is to have a Correct message regardless of the password we
+    pass as argument.
+</p>
+
+<p>The first step is to download and install <a href="https://github.com/NationalSecurityAgency/ghidra/releases">Ghidra</a>.
+    Ghidra is an open source software reverse engineering (SRE) suite of tools developed by NSA licensed under
+    the Apache-2.0 License.
+</p>
+<p>The Ghidra setup doesn't need installation, just download the tool and run ./ghidraRun</p>
+<p>First step is to create a new project so we can import our binary. Just click on "File>New Project"
+    and choose a "Non-shared Project". Give the project any name and press Finish.
+</p>
+<img src="/assets/img/ghidraPatch/newProject.png"/>
+<p>Then we can import our executable for analysis. Go to "File>Import file" and find the myPass executable file.</p>
+<p>Ghidra will automatically find the format (ELF) and the language (X86:LE:64:default:gcc). Press Ok.</p>
+<img src="/assets/img/ghidraPatch/importBin.png"/>
+<p>You will also get a small summary with the import result, click ok to continue.</p>
+<p>Back to the project, the file will now show on the project tree. Double click on the file icon to open
+    the "Code Browser"
+</p>
+<p>It will the ask you to analyze myPass. Choose yes and then just click on Analyze with all defaul options.</p>
+<img src="/assets/img/ghidraPatch/analyze.png"/>
+<p>If all went well you should see something like this:</p>
+<img src="/assets/img/ghidraPatch/workingGhidra.png"/>
+<p>Now let's find the code that checks the password.</p>
+<p>Our starting point will be the message shown when we give the wrong password.</p>
+<p>Select "Search>Memory" and look for the string "Wrong password"</p>
+<img src="/assets/img/ghidraPatch/search.png"/>
+<p>You can then select the result to navigate where the value is located inside
+the code. Click on the result and close the window.</p>
+<img src="/assets/img/ghidraPatch/searchResult.png"/>
+<p>From there you can navigate to the actual instruction that references this value
+    by double clicking the XREF link (you may need to scroll go the right to see it).</p>
+<img src="/assets/img/ghidraPatch/gotoRef.png"/>
+<p>It should have only a single reference, this is the part of the code we are interested in.</p>
+<img src="/assets/img/ghidraPatch/selectRef.png"/>
+<p>And finally we are able to see where the string is used. Notice that Ghidra was able to
+    disassemble the binary and shows us the reconstructed C code on the Decompile window.
+</p>
+<img src="/assets/img/ghidraPatch/conditional.png"/>
+<p>On the right side we can see the <a href="https://en.wikipedia.org/wiki/X86_instruction_listings">x86 instructions</a>. If we click on the conditional inside
+    the Decompile window it point us to the <a href="https://en.wikipedia.org/wiki/TEST_(x86_instruction)">TEST</a> instruction, but we are interested on what is 
+    actually done withe the test result.
+</p>
+<p>
+    Under TEST we have a JNZ instruction, meaning Jump if not zero and pointing to the branch that shows
+    the "Wrong Password" message. We need to patch this instruction so we either never go to this branch or we invert
+    the conditional so when the password is incorrect we don't jump.
+</p>
+<p>
+    For the first option we could replace JNZ with a NOP (no operation) and it would simply continue the execution.
+    For this example we will instead switch from JNZ to JZ (jump if zero). This way any password besides "password" will work. 
+</p>
+<p>First we right click the instruction and select "Patch Instruction"</p>
+<img src="/assets/img/ghidraPatch/patchInstruction.png"/>
+<p>We then replace JNZ with JZ</p>
+<img src="/assets/img/ghidraPatch/patchedConditional.png"/>
+<p>Notice that the code inside the if conditional on the Decompile window has changed.</p>
+<p>Now all we need is to export the elf file. Click on "File>Export Program" and choose the format ELF.</p>
+<img src="/assets/img/ghidraPatch/exportElf.png"/>
+<p>You will get a summary of the export when it works. You can now set the executable flag and check that any password
+    will be correct.
+</p>
+<pre>
+➜  chmod u+x myPass    
+➜  ./myPass foobar      
+Correct!
+</pre>
