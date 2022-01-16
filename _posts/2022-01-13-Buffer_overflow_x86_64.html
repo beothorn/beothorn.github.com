@@ -1,0 +1,483 @@
+---
+title: Buffer overflow on x86_64 tutorial
+layout: singlePost
+comments: true
+---
+<p>On this post I will use gdb to show how the stack works, what happens 
+    when you do a function call and how a user can exploit an unchecked buffer
+    to overwrite the stack.</p>
+<p>This tutorial assumes you are using a x86_64 linux pc.</p>
+
+<h2>Understanding the stack</h2>
+
+<p>The stack is a reserved space in memory where the executable stores local variables, function
+    parameters and the return address for the function caller. 
+</p>
+<p>The top of the stack moves in decrements. It is like the opposite of an array.</p>
+<p>On a typical x86_64 architecture executable, the top of the stack is stored on the rsp register (Stack Pointer)
+    and the base of the stack is stored on the rbp register (Base Pointer).
+</p>
+<p>We also have the rip (Instruction Pointer), a register that contains the address 
+    of the current instruction being executed.
+</p>
+<p>
+    Usually a function will only read and write on the stack inside the range from rsp to rbp 
+    (remember that rsp is always smaller than rbp because the stack top is decremented).
+</p>
+<p>But this is not necessarilly true. You can compile c code in a way no checks
+    will be done for stack access. In practice there are protections for this both by 
+    the compiler and by the OS that we will need to disable for our example to work.
+</p>
+<p>Let's use <a href="https://gcc.gnu.org/">gcc</a> and 
+    <a href="https://www.sourceware.org/gdb/">gdb</a> to see what goes on when a function is called.</p>
+<p>
+    Start by copying this code:
+</p>
+<pre>
+int c(short n){
+        return n + 1;
+}
+
+int b(){
+        short n = 42;
+        return c(n);
+}
+
+int a(){
+        return b();
+}
+
+int main(){
+        a();
+}
+</pre>
+<p>Save it as main.c and then just compile it:</p>
+<pre>gcc main.c -o main</pre>
+<p>Let's start debugging it with gdb:</p>
+<pre>gdb main</pre>
+<p>To run the executable and stop at the first instruction type start:</p>
+<pre>
+(gdb) start
+Temporary breakpoint 1 at 0x117b
+Starting program: /home/carol/dev/backToBasics/understandingTheStack/main 
+
+Temporary breakpoint 1, 0x000055555555517b in main ()
+</pre>
+<p>First, let's check the instructions for the main function using dissasemble:</p>
+<pre>
+(gdb) disassemble main
+Dump of assembler code for function main:
+    0x0000555555555173 <+0>:	endbr64 
+    0x0000555555555177 <+4>:	push   %rbp
+    0x0000555555555178 <+5>:	mov    %rsp,%rbp
+=> 0x000055555555517b <+8>:	mov    $0x0,%eax
+    0x0000555555555180 <+13>:	call   0x55555555515f <a>
+    0x0000555555555185 <+18>:	mov    $0x0,%eax
+    0x000055555555518a <+23>:	pop    %rbp
+    0x000055555555518b <+24>:	ret    
+End of assembler dump.
+</pre>
+<p>The instructions are executed left to right, so:</p>
+<pre>mov    $0x0,%eax</pre>
+<p>is copying 0 to the register eax.</p>
+<p>Gdb conveniently adds an arrow on the instruction currently on the rip register (Instruction Pointer)</p>
+<p>We can see that on instruction +4 the value from the rbp (Base Pointer) 
+    is being pushed on the stack. This causes the rsp (Stack Pointer) to be incremented.</p>
+<p>Then on +5 the current value for the Stack Pointer is being copied to the Base Pointer</p>
+<p>All stack operations will be done from the Base Pointer address downwards.</p>
+<pre>
+    0x0000555555555178 <+5>:	mov    %rsp,%rbp
+</pre>
+<p>We can inspect the values inside those two registers using the 
+    <a href="https://visualgdb.com/gdbreference/commands/x">x command</a></p>
+<pre>
+(gdb) x $rbp
+0x7fffffffdf10:	0x00000000
+(gdb) x $rsp
+0x7fffffffdf10:	0x00000000
+</pre>
+<p>There is nothing interesting going on right now here. Both registers have the same value
+    pointing to the same memory address 0x7fffffffdf10. 
+</p>
+<p>
+    We can move on to the next instruction:
+</p>
+<pre>
+(gdb) nexti
+0x0000555555555180 in main ()
+(gdb) disas main 
+Dump of assembler code for function main:
+    0x0000555555555173 <+0>:	endbr64 
+    0x0000555555555177 <+4>:	push   %rbp
+    0x0000555555555178 <+5>:	mov    %rsp,%rbp
+    0x000055555555517b <+8>:	mov    $0x0,%eax
+=> 0x0000555555555180 <+13>:	call   0x55555555515f <a>
+    0x0000555555555185 <+18>:	mov    $0x0,%eax
+    0x000055555555518a <+23>:	pop    %rbp
+    0x000055555555518b <+24>:	ret    
+End of assembler dump.
+</pre>
+<p>Finnaly things are going to start getting interesting. 
+    We are going to call our first function a().</p>
+<p>Take note that the instruction right after call on +18 has an address of 0x0000555555555185.</p>
+<p>By the way, disas is an alias to disassemble. ni is an alias to nexti and 
+    si is an alias to stepi.</p>
+<p>The difference between nexti and stepi is that stepi goes inside the call being made.</p>
+<p>That's what we want right now so let's step into the next instruction.</p>
+<pre>
+(gdb) stepi
+0x000055555555515f in a ()
+(gdb) disas a
+Dump of assembler code for function a:
+=> 0x000055555555515f <+0>:	endbr64 
+    0x0000555555555163 <+4>:	push   %rbp
+    0x0000555555555164 <+5>:	mov    %rsp,%rbp
+    0x0000555555555167 <+8>:	mov    $0x0,%eax
+    0x000055555555516c <+13>:	call   0x555555555140 <b>
+    0x0000555555555171 <+18>:	pop    %rbp
+    0x0000555555555172 <+19>:	ret    
+End of assembler dump.    
+</pre>
+<p>The first thing we see is that we are now inside the instructions for function a</p>
+<p>See how on instructions +5 and +8 we do exactly the same thing we did on our main?</p>
+<p>That's because, by convention, it is the responsability of the called function to restore the Base Pointer
+    and keep track of the Stack Pointer. So, here the function keeps the Base Pointer for the 
+    stack inside the stack itself.
+</p>
+<p>But before the content of the rbp register is pushed on the stack, 
+    let's take a look inside the Stack Pointer and the Base Pointer value.</p>
+<pre>
+(gdb) x $rbp
+0x7fffffffdf10:	0x00000000
+(gdb) x $rsp
+0x7fffffffdf08:	0x55555185
+</pre>
+<p>The rsp value has changed from 0x7fffffffdf10 to 0x7fffffffdf08</p>
+<p>That means the stack range from base to stack pointer has size:</p>
+<pre>0x7fffffffdf10 - 0x7fffffffdf08 = 8 bits</pre>
+<p>We can use the command x/2x $rsp to print the 2 bytes (8 bits) starting from rsp in hexadecimal.</p>
+<p>We start from the rsp since the stack adresses grows in decrements.</p>
+<pre>
+(gdb) x/2x $rsp
+0x7fffffffdf08:	0x55555185	0x00005555
+</pre>
+<p>We are on a system that uses 
+    <a href="https://en.wikipedia.org/wiki/Endianness">little-endian</a> meaning we need to read the 
+    byte from the bigger address first. This gives us: </p>
+<pre>0x0000555555555185</pre>
+<p>And if you look back again on the main function that is the address of the instruction right after
+    the call for a().
+</p>
+<pre> 
+   0x0000555555555185 <+18>:	mov    $0x0,%eax
+</pre>
+<p>We can conclude then that the call instruction moves the rip to the address of a(), adds the 
+    return address to the stack and decrement the rsp so the stack contains the return address.
+</p>
+<p>The fact that the return address is stored inside the stack is what the 
+    buffer overflow exploit takes advantage of. We can continue with the execution and come 
+    back to this later.
+</p>
+<p>
+    The function being called then updates the Base Pointer position so the return 
+    address in the range of the stack
+    the function will manipulate.
+</p>
+<p>We will add a breakpoint right before b() is called, continue the execution and then step 
+    into b() and disassemble it:</p>
+<pre>
+(gdb) disas a
+Dump of assembler code for function a:
+=> 0x000055555555515f <+0>:	endbr64 
+    0x0000555555555163 <+4>:	push   %rbp
+    0x0000555555555164 <+5>:	mov    %rsp,%rbp
+    0x0000555555555167 <+8>:	mov    $0x0,%eax
+    0x000055555555516c <+13>:	call   0x555555555140 <b>
+    0x0000555555555171 <+18>:	pop    %rbp
+    0x0000555555555172 <+19>:	ret    
+End of assembler dump.
+(gdb) break * a+13
+Breakpoint 2 at 0x55555555516c
+(gdb) continue
+Continuing.
+
+Breakpoint 2, 0x000055555555516c in a ()
+(gdb) si
+0x0000555555555140 in b ()
+(gdb) disas b
+Dump of assembler code for function b:
+=> 0x0000555555555140 <+0>:	endbr64 
+    0x0000555555555144 <+4>:	push   %rbp
+    0x0000555555555145 <+5>:	mov    %rsp,%rbp
+    0x0000555555555148 <+8>:	sub    $0x10,%rsp
+    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
+    0x0000555555555152 <+18>:	movswl -0x2(%rbp),%eax
+    0x0000555555555156 <+22>:	mov    %eax,%edi
+    0x0000555555555158 <+24>:	call   0x555555555129 <c>
+    0x000055555555515d <+29>:	leave  
+    0x000055555555515e <+30>:	ret    
+End of assembler dump.
+</pre>
+<p>There is something more being done with the Stack Pointer now</p>
+<pre>
+    0x0000555555555148 <+8>:	sub    $0x10,%rsp
+</pre>
+<p>At this instruction the Stack Pointer is being 
+    moved down 0x10 bits, which converting to decimal is 16 bits or 4 bytes.</p>
+<p>This is done because local variables are also stored on the stack, and this instruction is
+    reserving space to be used by our variable:
+</p>
+<pre>short n = 42;</pre>
+<p>A short has a size of 2 bytes but the rsp is moved 4 bytes. This is due the 
+    <a href="https://en.wikipedia.org/wiki/Data_structure_alignment">data alignment</a>.</p> 
+<p>At this instruction:</p>
+<pre>
+    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
+</pre>
+<p>The number 42 (0x2a in hexadecimal) is being copied to memory at the Base Pointer minus 2. 
+</p>
+<p>Then the value is copied from the stack at -0x2(%rbp) to the eax register</p>
+<p>On +22, the value from the eax register is copied to the edi register.</p>
+<p>As long as there are registers available, parameters are passed inside the registers.
+    So, for c(short n), the value for n is inside the edi register. 
+</p>
+<p>If you want to see what happens when there are lots of parameters, 
+    <a href="https://godbolt.org/z/eGqvzac73">see this example on godbolt.</a>
+</p>
+<p>
+    Next, on instruction +24, we call c. 0x000055555555515d should be the call return address.
+</p>
+<pre>
+(gdb) break * b+24
+Breakpoint 3 at 0x555555555158
+(gdb) continue
+Continuing.
+
+Breakpoint 3, 0x0000555555555158 in b ()
+(gdb) si
+0x0000555555555129 in c ()
+(gdb) disas c
+Dump of assembler code for function c:
+=> 0x0000555555555129 <+0>:	endbr64 
+   0x000055555555512d <+4>:	push   %rbp
+   0x000055555555512e <+5>:	mov    %rsp,%rbp
+   0x0000555555555131 <+8>:	mov    %edi,%eax
+   0x0000555555555133 <+10>:	mov    %ax,-0x4(%rbp)
+   0x0000555555555137 <+14>:	movswl -0x4(%rbp),%eax
+   0x000055555555513b <+18>:	add    $0x1,%eax
+   0x000055555555513e <+21>:	pop    %rbp
+   0x000055555555513f <+22>:	ret    
+End of assembler dump.
+</pre>
+<p>We are now on our last function on the call hierarchy. 
+    The first two instructions are the same as before.</p>
+<p>Save the Base Pointer on the stack and copy the new Base Pointer to the Stack Pointer</p>
+<p>Instruction +8 copies the parameter from edi to another register, eax.</p>
+<p>We are dealing with a short value (short has 2 bytes) and the register 
+    eax has size 16 bits (4 bytes)  </p>
+<p>The least significant 2 bytes of EAX can be treated as a 16-bit register called AX.</p>
+<p>At +10 it copies the value of AX to the stack. At +14 it copies 
+    it again to eax and at +18 it adds 1 to eax</p>
+<p>The eax register holds the value returned from the function.</p>
+<p>Let's put a breakpoint at +21 and look at the stack starting from the rsp until 0x7fffffffdf10,
+    which was the address for the Base Pointer on main()</p>
+<pre>
+(gdb) break * c+21
+Breakpoint 4 at 0x55555555513e
+(gdb) continue
+Continuing.
+
+Breakpoint 4, 0x000055555555513e in c ()
+(gdb) disas c
+Dump of assembler code for function c:
+    0x0000555555555129 <+0>:	endbr64 
+    0x000055555555512d <+4>:	push   %rbp
+    0x000055555555512e <+5>:	mov    %rsp,%rbp
+    0x0000555555555131 <+8>:	mov    %edi,%eax
+    0x0000555555555133 <+10>:	mov    %ax,-0x4(%rbp)
+    0x0000555555555137 <+14>:	movswl -0x4(%rbp),%eax
+    0x000055555555513b <+18>:	add    $0x1,%eax
+=> 0x000055555555513e <+21>:	pop    %rbp
+    0x000055555555513f <+22>:	ret    
+End of assembler dump.
+(gdb) x/2x $rsp
+0x7fffffffded0:	0xffffdef0	0x00007fff
+</pre> 
+<p>0x7fffffffdf10 − 0x7fffffffded0 = 0x40 , converting to decimal gives 64 bits, divided by 4 
+    results in 16 bytes
+</p>
+<pre>
+(gdb) x/16x $rsp
+0x7fffffffded0:	0xffffdef0	0x00007fff	0x5555515d	0x00005555
+0x7fffffffdee0:	0x00000000	0x00000000	0x55555190	0x002a5555
+0x7fffffffdef0:	0xffffdf00	0x00007fff	0x55555171	0x00005555
+0x7fffffffdf00:	0xffffdf10	0x00007fff	0x55555185	0x00005555    
+</pre>
+<p>Fixing for Endianness and reading from low to high address, we can try figuring out
+    what we have on the stack:</p>
+<pre>
+0x0000555555555185 -> The return address on the main function
+0x00007fffffffdf10 -> The Base Pointer address at main()
+0x0000555555555171 -> The return address on a()
+0x00007fffffffdf00 -> The Base Pointer address at a()
+0x002a -> The local variable at b() with value 42. It occupies only 2 bytes 
+0x555555555190 -> Whatever was on the stack before we stored 42, 
+                  we only care about the least significant 2 bytes, 
+                  so this is ignored
+0x00000000 -> padding, also ignored
+0x00000000 -> padding, also ignored
+0x000055555555515d -> The return address on b()
+0x00007fffffffdef0  -> The Base Pointer address at b()
+</pre>
+<p>Now that we got to the last instructions on the call hierarchy, we can run two more instructions.</p>
+<p>Instruction +21 should revert the stack Base Pointer to the one stored at the beginning of the function.</p>
+<p>pop will copy the value on top of the stack to rbp. Since the stack wasn't used for anything, it contains
+    the value for the original Base Pointer.
+</p>
+<p>Instruction +22 should use the address at the top of the stack 
+    as the next insturction on the rip (Instructon Pointer)</p>
+<p>
+    ret is equivalent to: pop register; jmp register; 
+</p>
+
+<pre>
+(gdb) disas
+Dump of assembler code for function c:
+    0x0000555555555129 <+0>:	endbr64 
+    0x000055555555512d <+4>:	push   %rbp
+    0x000055555555512e <+5>:	mov    %rsp,%rbp
+    0x0000555555555131 <+8>:	mov    %edi,%eax
+    0x0000555555555133 <+10>:	mov    %ax,-0x4(%rbp)
+    0x0000555555555137 <+14>:	movswl -0x4(%rbp),%eax
+    0x000055555555513b <+18>:	add    $0x1,%eax
+=> 0x000055555555513e <+21>:	pop    %rbp
+    0x000055555555513f <+22>:	ret    
+End of assembler dump.
+(gdb) x/2x $rbp
+0x7fffffffded0:	0xffffdef0	0x00007fff
+(gdb) x/2x $rsp
+0x7fffffffded0:	0xffffdef0	0x00007fff
+</pre>
+<p>At this point both Base Pointer and Stack Pointer have the same value.</p>
+<pre>
+(gdb) ni
+0x000055555555513f in c ()
+(gdb) x/2x $rbp
+0x7fffffffdef0:	0xffffdf00	0x00007fff
+(gdb) x/2x $rsp
+0x7fffffffded8:	0x5555515d	0x00005555
+</pre>
+<p>
+    When we pop to rbp the value from the memory address inside Stack Pointer is copied to rbp.
+</p>
+<p>
+    In this case rsp was pointing to 0x7fffffffded0 and on this address the value was 0x7fffffffdef0.
+</p>
+<p>
+    Pop also incemented rsp from 0x7fffffffded0 to 0x7fffffffded8. Remember the 
+    stack start is bigger than the top so the stack is now smaller. At the top of the stack 
+    we have now 0x000055555555515d.
+</p>
+<pre>
+(gdb) ni
+0x000055555555515d in b ()
+(gdb) x $rbp
+0x7fffffffdef0:	0xffffdf00
+(gdb) x $rsp
+0x7fffffffdee0:	0x00000000
+(gdb) disas
+Dump of assembler code for function b:
+    0x0000555555555140 <+0>:	endbr64 
+    0x0000555555555144 <+4>:	push   %rbp
+    0x0000555555555145 <+5>:	mov    %rsp,%rbp
+    0x0000555555555148 <+8>:	sub    $0x10,%rsp
+    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
+    0x0000555555555152 <+18>:	movswl -0x2(%rbp),%eax
+    0x0000555555555156 <+22>:	mov    %eax,%edi
+    0x0000555555555158 <+24>:	call   0x555555555129 <c>
+=> 0x000055555555515d <+29>:	leave  
+    0x000055555555515e <+30>:	ret    
+End of assembler dump.
+</pre>
+<p>ret on b popped the value from the top of the stack and jumped to the popped address.</p>
+<p>The Instruction pointer is now inside b() and is going to call the leave instruction. 
+    This is equivalent to:
+</p>
+<pre>
+mov   %rbp, %rsp -> Move the top of the stack to the base
+pop   %rbp -> Pop from the stack, this is the original Base Pointer
+</pre>
+<p>And looking into our registers:
+</p>
+<pre>
+(gdb) disas
+Dump of assembler code for function b:
+    0x0000555555555140 <+0>:	endbr64 
+    0x0000555555555144 <+4>:	push   %rbp
+    0x0000555555555145 <+5>:	mov    %rsp,%rbp
+    0x0000555555555148 <+8>:	sub    $0x10,%rsp
+    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
+    0x0000555555555152 <+18>:	movswl -0x2(%rbp),%eax
+    0x0000555555555156 <+22>:	mov    %eax,%edi
+    0x0000555555555158 <+24>:	call   0x555555555129 <c>
+=> 0x000055555555515d <+29>:	leave  
+    0x000055555555515e <+30>:	ret    
+End of assembler dump.
+(gdb) x/2x $rbp
+0x7fffffffdef0:	0xffffdf00	0x00007fff
+(gdb) x/2x $rsp
+0x7fffffffdee0:	0x00000000	0x00000000
+(gdb) ni
+0x000055555555515e in b ()
+(gdb) x/2x $rbp
+0x7fffffffdf00:	0xffffdf10	0x00007fff
+(gdb) x/2x $rsp
+0x7fffffffdef8:	0x55555171	0x00005555   
+</pre>
+<p>And then return will do the same as it did on c()</p>
+<p>The most important thing to notice was that the stack holds both local variables data and 
+    the return adresses from function calls.
+</p>
+<p>With this general idea on how the stack works, 
+    what goes inside it and how it is used to jump back and forth 
+    instructions we can go on to another example.</p>
+
+<h2>Rewriting the stack using Buffer Overflow</h2>
+
+<p>For this example to easily work we will need to turn off some OS protections.</p>
+<p>Don't worry, we will do it in a way that is only temporary. First we need to force the OS
+    to stop randomizing the virtual address so we can reliably reference an address. If Address Space Layout Randomization (ASLR)
+     is on (default) the adressess will be different on each execution.
+</p>
+<pre>
+sudo -i
+echo "0" > /proc/sys/kernel/randomize_va_space
+echo This should print 0
+cat /proc/sys/kernel/randomize_va_space
+</pre>
+<p>We will also need to compile with gcc using the flag -fno-stack-protector</p>
+<p>This is the code we are going to exploit:</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+void unrelated(){
+    printf("This should not be called\n");
+}
+
+void enterString(){
+    char buffer[2];
+    printf("Enter two characters:\n");
+    scanf("%s", buffer); 
+}
+
+int main(){
+    enterString();
+}
+</pre>
+<p>
+    It is not doing anything usefull. It asks for two characters, write them into a buffer array
+    and then do noting with it. There is also a function that is not called. For simplicity sake
+    we will exploit the buffer overflow to call that function. Another thing that can also be done
+    is writing a function to be called on the stack itself. This would require a little more work
+    and  
+</p>

@@ -1,0 +1,9 @@
+# Is a geek
+
+Source code for (https://beothorn.github.io/)[https://beothorn.github.io/]
+
+This is a simple static blog implementation using Jekyll and hosted on Github.
+
+It is aiming to be as simple as possible, using only vanilla JS and handwritten css.
+
+Feel free to fork it and use on your own blog.
