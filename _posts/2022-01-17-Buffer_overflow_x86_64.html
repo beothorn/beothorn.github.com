@@ -67,14 +67,14 @@ Temporary breakpoint 1, 0x000055555555517b in main ()
 <pre>
 (gdb) disassemble main
 Dump of assembler code for function main:
-    0x0000555555555173 <+0>:	endbr64 
-    0x0000555555555177 <+4>:	push   %rbp
-    0x0000555555555178 <+5>:	mov    %rsp,%rbp
-=> 0x000055555555517b <+8>:	mov    $0x0,%eax
-    0x0000555555555180 <+13>:	call   0x55555555515f <a>
-    0x0000555555555185 <+18>:	mov    $0x0,%eax
-    0x000055555555518a <+23>:	pop    %rbp
-    0x000055555555518b <+24>:	ret    
+    0x0000555555555173 &lt;+0&gt;:	endbr64 
+    0x0000555555555177 &lt;+4&gt;:	push   %rbp
+    0x0000555555555178 &lt;+5&gt;:	mov    %rsp,%rbp
+=&gt 0x000055555555517b &lt;+8&gt;:	mov    $0x0,%eax
+    0x0000555555555180 &lt;+13&gt;:	call   0x55555555515f &lt;a&gt;
+    0x0000555555555185 &lt;+18&gt;:	mov    $0x0,%eax
+    0x000055555555518a &lt;+23&gt;:	pop    %rbp
+    0x000055555555518b &lt;+24&gt;:	ret    
 End of assembler dump.
 </pre>
 <p>The instructions are executed left to right, so:</p>
@@ -86,7 +86,7 @@ End of assembler dump.
 <p>Then on +5 the current value for the Stack Pointer is being copied to the Base Pointer</p>
 <p>All stack operations will be done from the Base Pointer address downwards.</p>
 <pre>
-    0x0000555555555178 <+5>:	mov    %rsp,%rbp
+    0x0000555555555178 &lt;+5&gt;:	mov    %rsp,%rbp
 </pre>
 <p>We can inspect the values inside those two registers using the 
     <a href="https://visualgdb.com/gdbreference/commands/x">x command</a></p>
@@ -107,14 +107,14 @@ End of assembler dump.
 0x0000555555555180 in main ()
 (gdb) disas main 
 Dump of assembler code for function main:
-    0x0000555555555173 <+0>:	endbr64 
-    0x0000555555555177 <+4>:	push   %rbp
-    0x0000555555555178 <+5>:	mov    %rsp,%rbp
-    0x000055555555517b <+8>:	mov    $0x0,%eax
-=> 0x0000555555555180 <+13>:	call   0x55555555515f <a>
-    0x0000555555555185 <+18>:	mov    $0x0,%eax
-    0x000055555555518a <+23>:	pop    %rbp
-    0x000055555555518b <+24>:	ret    
+    0x0000555555555173 &lt;+0&gt;:	endbr64 
+    0x0000555555555177 &lt;+4&gt;:	push   %rbp
+    0x0000555555555178 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x000055555555517b &lt;+8&gt;:	mov    $0x0,%eax
+=&gt 0x0000555555555180 &lt;+13&gt;:	call   0x55555555515f &lt;a&gt;
+    0x0000555555555185 &lt;+18&gt;:	mov    $0x0,%eax
+    0x000055555555518a &lt;+23&gt;:	pop    %rbp
+    0x000055555555518b &lt;+24&gt;:	ret    
 End of assembler dump.
 </pre>
 <p>Finnaly things are going to start getting interesting. 
@@ -129,13 +129,13 @@ End of assembler dump.
 0x000055555555515f in a ()
 (gdb) disas a
 Dump of assembler code for function a:
-=> 0x000055555555515f <+0>:	endbr64 
-    0x0000555555555163 <+4>:	push   %rbp
-    0x0000555555555164 <+5>:	mov    %rsp,%rbp
-    0x0000555555555167 <+8>:	mov    $0x0,%eax
-    0x000055555555516c <+13>:	call   0x555555555140 <b>
-    0x0000555555555171 <+18>:	pop    %rbp
-    0x0000555555555172 <+19>:	ret    
+=&gt 0x000055555555515f &lt;+0&gt;:	endbr64 
+    0x0000555555555163 &lt;+4&gt;:	push   %rbp
+    0x0000555555555164 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555167 &lt;+8&gt;:	mov    $0x0,%eax
+    0x000055555555516c &lt;+13&gt;:	call   0x555555555140 &lt;b&gt;
+    0x0000555555555171 &lt;+18&gt;:	pop    %rbp
+    0x0000555555555172 &lt;+19&gt;:	ret    
 End of assembler dump.    
 </pre>
 <p>The first thing we see is that we are now inside the instructions for function a</p>
@@ -169,7 +169,7 @@ End of assembler dump.
     the call for a().
 </p>
 <pre> 
-   0x0000555555555185 <+18>:	mov    $0x0,%eax
+   0x0000555555555185 &lt;+18&gt;:	mov    $0x0,%eax
 </pre>
 <p>We can conclude then that the call instruction moves the rip to the address of a(), adds the 
     return address to the stack and decrement the rsp so the stack contains the return address.
@@ -188,13 +188,13 @@ End of assembler dump.
 <pre>
 (gdb) disas a
 Dump of assembler code for function a:
-=> 0x000055555555515f <+0>:	endbr64 
-    0x0000555555555163 <+4>:	push   %rbp
-    0x0000555555555164 <+5>:	mov    %rsp,%rbp
-    0x0000555555555167 <+8>:	mov    $0x0,%eax
-    0x000055555555516c <+13>:	call   0x555555555140 <b>
-    0x0000555555555171 <+18>:	pop    %rbp
-    0x0000555555555172 <+19>:	ret    
+=&gt 0x000055555555515f &lt;+0&gt;:	endbr64 
+    0x0000555555555163 &lt;+4&gt;:	push   %rbp
+    0x0000555555555164 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555167 &lt;+8&gt;:	mov    $0x0,%eax
+    0x000055555555516c &lt;+13&gt;:	call   0x555555555140 &lt;b&gt;
+    0x0000555555555171 &lt;+18&gt;:	pop    %rbp
+    0x0000555555555172 &lt;+19&gt;:	ret    
 End of assembler dump.
 (gdb) break * a+13
 Breakpoint 2 at 0x55555555516c
@@ -206,21 +206,21 @@ Breakpoint 2, 0x000055555555516c in a ()
 0x0000555555555140 in b ()
 (gdb) disas b
 Dump of assembler code for function b:
-=> 0x0000555555555140 <+0>:	endbr64 
-    0x0000555555555144 <+4>:	push   %rbp
-    0x0000555555555145 <+5>:	mov    %rsp,%rbp
-    0x0000555555555148 <+8>:	sub    $0x10,%rsp
-    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
-    0x0000555555555152 <+18>:	movswl -0x2(%rbp),%eax
-    0x0000555555555156 <+22>:	mov    %eax,%edi
-    0x0000555555555158 <+24>:	call   0x555555555129 <c>
-    0x000055555555515d <+29>:	leave  
-    0x000055555555515e <+30>:	ret    
+=&gt 0x0000555555555140 &lt;+0&gt;:	endbr64 
+    0x0000555555555144 &lt;+4&gt;:	push   %rbp
+    0x0000555555555145 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555148 &lt;+8&gt;:	sub    $0x10,%rsp
+    0x000055555555514c &lt;+12&gt;:	movw   $0x2a,-0x2(%rbp)
+    0x0000555555555152 &lt;+18&gt;:	movswl -0x2(%rbp),%eax
+    0x0000555555555156 &lt;+22&gt;:	mov    %eax,%edi
+    0x0000555555555158 &lt;+24&gt;:	call   0x555555555129 &lt;c&gt;
+    0x000055555555515d &lt;+29&gt;:	leave  
+    0x000055555555515e &lt;+30&gt;:	ret    
 End of assembler dump.
 </pre>
 <p>There is something more being done with the Stack Pointer now</p>
 <pre>
-    0x0000555555555148 <+8>:	sub    $0x10,%rsp
+    0x0000555555555148 &lt;+8&gt;:	sub    $0x10,%rsp
 </pre>
 <p>At this instruction the Stack Pointer is being 
     moved down 0x10 bits, which converting to decimal is 16 bits or 4 bytes.</p>
@@ -232,7 +232,7 @@ End of assembler dump.
     <a href="https://en.wikipedia.org/wiki/Data_structure_alignment">data alignment</a>.</p> 
 <p>At this instruction:</p>
 <pre>
-    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
+    0x000055555555514c &lt;+12&gt;:	movw   $0x2a,-0x2(%rbp)
 </pre>
 <p>The number 42 (0x2a in hexadecimal) is being copied to memory at the Base Pointer minus 2. 
 </p>
@@ -258,15 +258,15 @@ Breakpoint 3, 0x0000555555555158 in b ()
 0x0000555555555129 in c ()
 (gdb) disas c
 Dump of assembler code for function c:
-=> 0x0000555555555129 <+0>:	endbr64 
-   0x000055555555512d <+4>:	push   %rbp
-   0x000055555555512e <+5>:	mov    %rsp,%rbp
-   0x0000555555555131 <+8>:	mov    %edi,%eax
-   0x0000555555555133 <+10>:	mov    %ax,-0x4(%rbp)
-   0x0000555555555137 <+14>:	movswl -0x4(%rbp),%eax
-   0x000055555555513b <+18>:	add    $0x1,%eax
-   0x000055555555513e <+21>:	pop    %rbp
-   0x000055555555513f <+22>:	ret    
+=&gt 0x0000555555555129 &lt;+0&gt;:	endbr64 
+   0x000055555555512d &lt;+4&gt;:	push   %rbp
+   0x000055555555512e &lt;+5&gt;:	mov    %rsp,%rbp
+   0x0000555555555131 &lt;+8&gt;:	mov    %edi,%eax
+   0x0000555555555133 &lt;+10&gt;:	mov    %ax,-0x4(%rbp)
+   0x0000555555555137 &lt;+14&gt;:	movswl -0x4(%rbp),%eax
+   0x000055555555513b &lt;+18&gt;:	add    $0x1,%eax
+   0x000055555555513e &lt;+21&gt;:	pop    %rbp
+   0x000055555555513f &lt;+22&gt;:	ret    
 End of assembler dump.
 </pre>
 <p>We are now on our last function on the call hierarchy. 
@@ -290,15 +290,15 @@ Continuing.
 Breakpoint 4, 0x000055555555513e in c ()
 (gdb) disas c
 Dump of assembler code for function c:
-    0x0000555555555129 <+0>:	endbr64 
-    0x000055555555512d <+4>:	push   %rbp
-    0x000055555555512e <+5>:	mov    %rsp,%rbp
-    0x0000555555555131 <+8>:	mov    %edi,%eax
-    0x0000555555555133 <+10>:	mov    %ax,-0x4(%rbp)
-    0x0000555555555137 <+14>:	movswl -0x4(%rbp),%eax
-    0x000055555555513b <+18>:	add    $0x1,%eax
-=> 0x000055555555513e <+21>:	pop    %rbp
-    0x000055555555513f <+22>:	ret    
+    0x0000555555555129 &lt;+0&gt;:	endbr64 
+    0x000055555555512d &lt;+4&gt;:	push   %rbp
+    0x000055555555512e &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555131 &lt;+8&gt;:	mov    %edi,%eax
+    0x0000555555555133 &lt;+10&gt;:	mov    %ax,-0x4(%rbp)
+    0x0000555555555137 &lt;+14&gt;:	movswl -0x4(%rbp),%eax
+    0x000055555555513b &lt;+18&gt;:	add    $0x1,%eax
+=&gt 0x000055555555513e &lt;+21&gt;:	pop    %rbp
+    0x000055555555513f &lt;+22&gt;:	ret    
 End of assembler dump.
 (gdb) x/2x $rsp
 0x7fffffffded0:	0xffffdef0	0x00007fff
@@ -343,15 +343,15 @@ End of assembler dump.
 <pre>
 (gdb) disas
 Dump of assembler code for function c:
-    0x0000555555555129 <+0>:	endbr64 
-    0x000055555555512d <+4>:	push   %rbp
-    0x000055555555512e <+5>:	mov    %rsp,%rbp
-    0x0000555555555131 <+8>:	mov    %edi,%eax
-    0x0000555555555133 <+10>:	mov    %ax,-0x4(%rbp)
-    0x0000555555555137 <+14>:	movswl -0x4(%rbp),%eax
-    0x000055555555513b <+18>:	add    $0x1,%eax
-=> 0x000055555555513e <+21>:	pop    %rbp
-    0x000055555555513f <+22>:	ret    
+    0x0000555555555129 &lt;+0&gt;:	endbr64 
+    0x000055555555512d &lt;+4&gt;:	push   %rbp
+    0x000055555555512e &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555131 &lt;+8&gt;:	mov    %edi,%eax
+    0x0000555555555133 &lt;+10&gt;:	mov    %ax,-0x4(%rbp)
+    0x0000555555555137 &lt;+14&gt;:	movswl -0x4(%rbp),%eax
+    0x000055555555513b &lt;+18&gt;:	add    $0x1,%eax
+=&gt 0x000055555555513e &lt;+21&gt;:	pop    %rbp
+    0x000055555555513f &lt;+22&gt;:	ret    
 End of assembler dump.
 (gdb) x/2x $rbp
 0x7fffffffded0:	0xffffdef0	0x00007fff
@@ -387,16 +387,16 @@ End of assembler dump.
 0x7fffffffdee0:	0x00000000
 (gdb) disas
 Dump of assembler code for function b:
-    0x0000555555555140 <+0>:	endbr64 
-    0x0000555555555144 <+4>:	push   %rbp
-    0x0000555555555145 <+5>:	mov    %rsp,%rbp
-    0x0000555555555148 <+8>:	sub    $0x10,%rsp
-    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
-    0x0000555555555152 <+18>:	movswl -0x2(%rbp),%eax
-    0x0000555555555156 <+22>:	mov    %eax,%edi
-    0x0000555555555158 <+24>:	call   0x555555555129 <c>
-=> 0x000055555555515d <+29>:	leave  
-    0x000055555555515e <+30>:	ret    
+    0x0000555555555140 &lt;+0&gt;:	endbr64 
+    0x0000555555555144 &lt;+4&gt;:	push   %rbp
+    0x0000555555555145 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555148 &lt;+8&gt;:	sub    $0x10,%rsp
+    0x000055555555514c &lt;+12&gt;:	movw   $0x2a,-0x2(%rbp)
+    0x0000555555555152 &lt;+18&gt;:	movswl -0x2(%rbp),%eax
+    0x0000555555555156 &lt;+22&gt;:	mov    %eax,%edi
+    0x0000555555555158 &lt;+24&gt;:	call   0x555555555129 &lt;c&gt;
+=&gt 0x000055555555515d &lt;+29&gt;:	leave  
+    0x000055555555515e &lt;+30&gt;:	ret    
 End of assembler dump.
 </pre>
 <p>ret on b popped the value from the top of the stack and jumped to the popped address.</p>
@@ -412,16 +412,16 @@ pop   %rbp -> Pop from the stack, this is the original Base Pointer
 <pre>
 (gdb) disas
 Dump of assembler code for function b:
-    0x0000555555555140 <+0>:	endbr64 
-    0x0000555555555144 <+4>:	push   %rbp
-    0x0000555555555145 <+5>:	mov    %rsp,%rbp
-    0x0000555555555148 <+8>:	sub    $0x10,%rsp
-    0x000055555555514c <+12>:	movw   $0x2a,-0x2(%rbp)
-    0x0000555555555152 <+18>:	movswl -0x2(%rbp),%eax
-    0x0000555555555156 <+22>:	mov    %eax,%edi
-    0x0000555555555158 <+24>:	call   0x555555555129 <c>
-=> 0x000055555555515d <+29>:	leave  
-    0x000055555555515e <+30>:	ret    
+    0x0000555555555140 &lt;+0&gt;:	endbr64 
+    0x0000555555555144 &lt;+4&gt;:	push   %rbp
+    0x0000555555555145 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000555555555148 &lt;+8&gt;:	sub    $0x10,%rsp
+    0x000055555555514c &lt;+12&gt;:	movw   $0x2a,-0x2(%rbp)
+    0x0000555555555152 &lt;+18&gt;:	movswl -0x2(%rbp),%eax
+    0x0000555555555156 &lt;+22&gt;:	mov    %eax,%edi
+    0x0000555555555158 &lt;+24&gt;:	call   0x555555555129 &lt;c&gt;
+=&gt 0x000055555555515d &lt;+29&gt;:	leave  
+    0x000055555555515e &lt;+30&gt;:	ret    
 End of assembler dump.
 (gdb) x/2x $rbp
 0x7fffffffdef0:	0xffffdf00	0x00007fff
@@ -508,14 +508,14 @@ Starting program: /home/carol/dev/backToBasics/understandingTheStack/bufferExplo
 Temporary breakpoint 1, 0x00000000004011b4 in main ()
 (gdb) disas
 Dump of assembler code for function main:
-   0x00000000004011ac <+0>:	endbr64 
-   0x00000000004011b0 <+4>:	push   %rbp
-   0x00000000004011b1 <+5>:	mov    %rsp,%rbp
-=> 0x00000000004011b4 <+8>:	mov    $0x0,%eax
-   0x00000000004011b9 <+13>:	call   0x40116d <enterString>
-   0x00000000004011be <+18>:	mov    $0x0,%eax
-   0x00000000004011c3 <+23>:	pop    %rbp
-   0x00000000004011c4 <+24>:	ret    
+   0x00000000004011ac &lt;+0&gt;:	endbr64 
+   0x00000000004011b0 &lt;+4&gt;:	push   %rbp
+   0x00000000004011b1 &lt;+5&gt;:	mov    %rsp,%rbp
+=&gt 0x00000000004011b4 &lt;+8&gt;:	mov    $0x0,%eax
+   0x00000000004011b9 &lt;+13&gt;:	call   0x40116d <enterString>
+   0x00000000004011be &lt;+18&gt;:	mov    $0x0,%eax
+   0x00000000004011c3 &lt;+23&gt;:	pop    %rbp
+   0x00000000004011c4 &lt;+24&gt;:	ret    
 End of assembler dump.
 (gdb) si
 0x00000000004011b9 in main ()
@@ -523,23 +523,23 @@ End of assembler dump.
 0x000000000040116d in enterString ()
 (gdb) disas
 Dump of assembler code for function enterString:
-=> 0x000000000040116d <+0>:	endbr64 
-   0x0000000000401171 <+4>:	push   %rbp
-   0x0000000000401172 <+5>:	mov    %rsp,%rbp
-   0x0000000000401175 <+8>:	sub    $0x10,%rsp
-   0x0000000000401179 <+12>:	lea    0xe9e(%rip),%rdi        # 0x40201e
-   0x0000000000401180 <+19>:	call   0x401050 <puts@plt>
-   0x0000000000401185 <+24>:	lea    -0x2(%rbp),%rax
-   0x0000000000401189 <+28>:	mov    %rax,%rsi
-   0x000000000040118c <+31>:	lea    0xea1(%rip),%rdi        # 0x402034
-   0x0000000000401193 <+38>:	mov    $0x0,%eax
-   0x0000000000401198 <+43>:	call   0x401060 <__isoc99_scanf@plt>
-   0x000000000040119d <+48>:	lea    -0x2(%rbp),%rax
-   0x00000000004011a1 <+52>:	mov    %rax,%rdi
-   0x00000000004011a4 <+55>:	call   0x401050 <puts@plt>
-   0x00000000004011a9 <+60>:	nop
-   0x00000000004011aa <+61>:	leave  
-   0x00000000004011ab <+62>:	ret    
+=&gt 0x000000000040116d &lt;+0&gt;:	endbr64 
+   0x0000000000401171 &lt;+4&gt;:	push   %rbp
+   0x0000000000401172 &lt;+5&gt;:	mov    %rsp,%rbp
+   0x0000000000401175 &lt;+8&gt;:	sub    $0x10,%rsp
+   0x0000000000401179 &lt;+12&gt;:	lea    0xe9e(%rip),%rdi        # 0x40201e
+   0x0000000000401180 &lt;+19&gt;:	call   0x401050 <puts@plt>
+   0x0000000000401185 &lt;+24&gt;:	lea    -0x2(%rbp),%rax
+   0x0000000000401189 &lt;+28&gt;:	mov    %rax,%rsi
+   0x000000000040118c &lt;+31&gt;:	lea    0xea1(%rip),%rdi        # 0x402034
+   0x0000000000401193 &lt;+38&gt;:	mov    $0x0,%eax
+   0x0000000000401198 &lt;+43&gt;:	call   0x401060 <__isoc99_scanf@plt>
+   0x000000000040119d &lt;+48&gt;:	lea    -0x2(%rbp),%rax
+   0x00000000004011a1 &lt;+52&gt;:	mov    %rax,%rdi
+   0x00000000004011a4 &lt;+55&gt;:	call   0x401050 <puts@plt>
+   0x00000000004011a9 &lt;+60&gt;:	nop
+   0x00000000004011aa &lt;+61&gt;:	leave  
+   0x00000000004011ab &lt;+62&gt;:	ret    
 End of assembler dump.
 (gdb) break * enterString+43
 Breakpoint 2 at 0x401198
@@ -617,14 +617,14 @@ abcdefghijklmnopqrstuvwxyz
 <pre>
 (gdb) disas unrelated
 Dump of assembler code for function unrelated:
-    0x0000000000401156 <+0>:	endbr64 
-    0x000000000040115a <+4>:	push   %rbp
-    0x000000000040115b <+5>:	mov    %rsp,%rbp
-    0x000000000040115e <+8>:	lea    0xe9f(%rip),%rdi        # 0x402004
-    0x0000000000401165 <+15>:	call   0x401050 <puts@plt>
-    0x000000000040116a <+20>:	nop
-    0x000000000040116b <+21>:	pop    %rbp
-    0x000000000040116c <+22>:	ret    
+    0x0000000000401156 &lt;+0&gt;:	endbr64 
+    0x000000000040115a &lt;+4&gt;:	push   %rbp
+    0x000000000040115b &lt;+5&gt;:	mov    %rsp,%rbp
+    0x000000000040115e &lt;+8&gt;:	lea    0xe9f(%rip),%rdi        # 0x402004
+    0x0000000000401165 &lt;+15&gt;:	call   0x401050 <puts@plt>
+    0x000000000040116a &lt;+20&gt;:	nop
+    0x000000000040116b &lt;+21&gt;:	pop    %rbp
+    0x000000000040116c &lt;+22&gt;:	ret    
 End of assembler dump.    
 </pre>
 <p>0x0000000000401156, so rqpo needs to be 0000 and nmlk to be 0x00401156.</p>
@@ -655,23 +655,23 @@ python -c 'print("ab" + "\x00\xde\xff\xff\xff\x7f\x00\x00\x56\x11\x40\x00\x00\x0
 gdb buff
 (gdb) disas enterString
 Dump of assembler code for function enterString:
-    0x000000000040116d <+0>:	endbr64 
-    0x0000000000401171 <+4>:	push   %rbp
-    0x0000000000401172 <+5>:	mov    %rsp,%rbp
-    0x0000000000401175 <+8>:	sub    $0x10,%rsp
-    0x0000000000401179 <+12>:	lea    0xe9e(%rip),%rdi        # 0x40201e
-    0x0000000000401180 <+19>:	call   0x401050 <puts@plt>
-    0x0000000000401185 <+24>:	lea    -0x2(%rbp),%rax
-    0x0000000000401189 <+28>:	mov    %rax,%rsi
-    0x000000000040118c <+31>:	lea    0xea1(%rip),%rdi        # 0x402034
-    0x0000000000401193 <+38>:	mov    $0x0,%eax
-    0x0000000000401198 <+43>:	call   0x401060 <__isoc99_scanf@plt>
-    0x000000000040119d <+48>:	lea    -0x2(%rbp),%rax
-    0x00000000004011a1 <+52>:	mov    %rax,%rdi
-    0x00000000004011a4 <+55>:	call   0x401050 <puts@plt>
-    0x00000000004011a9 <+60>:	nop
-    0x00000000004011aa <+61>:	leave  
-    0x00000000004011ab <+62>:	ret    
+    0x000000000040116d &lt;+0&gt;:	endbr64 
+    0x0000000000401171 &lt;+4&gt;:	push   %rbp
+    0x0000000000401172 &lt;+5&gt;:	mov    %rsp,%rbp
+    0x0000000000401175 &lt;+8&gt;:	sub    $0x10,%rsp
+    0x0000000000401179 &lt;+12&gt;:	lea    0xe9e(%rip),%rdi        # 0x40201e
+    0x0000000000401180 &lt;+19&gt;:	call   0x401050 <puts@plt>
+    0x0000000000401185 &lt;+24&gt;:	lea    -0x2(%rbp),%rax
+    0x0000000000401189 &lt;+28&gt;:	mov    %rax,%rsi
+    0x000000000040118c &lt;+31&gt;:	lea    0xea1(%rip),%rdi        # 0x402034
+    0x0000000000401193 &lt;+38&gt;:	mov    $0x0,%eax
+    0x0000000000401198 &lt;+43&gt;:	call   0x401060 <__isoc99_scanf@plt>
+    0x000000000040119d &lt;+48&gt;:	lea    -0x2(%rbp),%rax
+    0x00000000004011a1 &lt;+52&gt;:	mov    %rax,%rdi
+    0x00000000004011a4 &lt;+55&gt;:	call   0x401050 <puts@plt>
+    0x00000000004011a9 &lt;+60&gt;:	nop
+    0x00000000004011aa &lt;+61&gt;:	leave  
+    0x00000000004011ab &lt;+62&gt;:	ret    
 End of assembler dump.
 (gdb) break * enterString+48
 (gdb) run < rewrite
