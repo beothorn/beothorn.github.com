@@ -86,7 +86,7 @@ End of assembler dump.
 <p>Then on +5 the current value for the Stack Pointer is being copied to the Base Pointer</p>
 <p>All stack operations will be done from the Base Pointer address downwards.</p>
 <pre>
-    0x0000555555555178 &lt;+5&gt;:	mov    %rsp,%rbp
+0x0000555555555178 &lt;+5&gt;:	mov    %rsp,%rbp
 </pre>
 <p>We can inspect the values inside those two registers using the 
     <a href="https://visualgdb.com/gdbreference/commands/x">x command</a></p>
@@ -169,7 +169,7 @@ End of assembler dump.
     the call for a().
 </p>
 <pre> 
-   0x0000555555555185 &lt;+18&gt;:	mov    $0x0,%eax
+0x0000555555555185 &lt;+18&gt;:	mov    $0x0,%eax
 </pre>
 <p>We can conclude then that the call instruction moves the rip to the address of a(), adds the 
     return address to the stack and decrement the rsp so the stack contains the return address.
@@ -220,7 +220,7 @@ End of assembler dump.
 </pre>
 <p>There is something more being done with the Stack Pointer now</p>
 <pre>
-    0x0000555555555148 &lt;+8&gt;:	sub    $0x10,%rsp
+0x0000555555555148 &lt;+8&gt;:	sub    $0x10,%rsp
 </pre>
 <p>At this instruction the Stack Pointer is being 
     moved down 0x10 bits, which converting to decimal is 16 bits or 4 bytes.</p>
@@ -232,7 +232,7 @@ End of assembler dump.
     <a href="https://en.wikipedia.org/wiki/Data_structure_alignment">data alignment</a>.</p> 
 <p>At this instruction:</p>
 <pre>
-    0x000055555555514c &lt;+12&gt;:	movw   $0x2a,-0x2(%rbp)
+0x000055555555514c &lt;+12&gt;:	movw   $0x2a,-0x2(%rbp)
 </pre>
 <p>The number 42 (0x2a in hexadecimal) is being copied to memory at the Base Pointer minus 2. 
 </p>
