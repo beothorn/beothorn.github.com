@@ -139,7 +139,7 @@ Dump of assembler code for function a:
 End of assembler dump.    
 </pre>
 <p>The first thing we see is that we are now inside the instructions for function a</p>
-<p>See how on instructions +5 and +8 we do exactly the same thing we did on our main?</p>
+<p>See how on instructions +4 and +5 we do exactly the same thing we did on our main?</p>
 <p>That's because, by convention, it is the responsability of the called function to restore the Base Pointer
     and keep track of the Stack Pointer. So, here the function keeps the Base Pointer for the 
     stack inside the stack itself.
@@ -271,7 +271,7 @@ End of assembler dump.
 </pre>
 <p>We are now on our last function on the call hierarchy. 
     The first two instructions are the same as before.</p>
-<p>Save the Base Pointer on the stack and copy the new Base Pointer to the Stack Pointer</p>
+<p>Save the original Base Pointer on the stack and copy the Stack Pointer as the new Base Pointer.</p>
 <p>Instruction +8 copies the parameter from edi to another register, eax.</p>
 <p>We are dealing with a short value (short has 2 bytes) and the register 
     eax has size 16 bits (4 bytes)  </p>
@@ -321,7 +321,7 @@ End of assembler dump.
 0x0000555555555171 -> The return address on a()
 0x00007fffffffdf00 -> The Base Pointer address at a()
 0x002a -> The local variable at b() with value 42. It occupies only 2 bytes 
-0x555555555190 -> Whatever was on the stack before we stored 42, 
+0x555555555190 -> Whatever was on memory before we stored 42, 
                   we only care about the least significant 2 bytes, 
                   so this is ignored
 0x00000000 -> padding, also ignored
@@ -331,7 +331,8 @@ End of assembler dump.
 </pre>
 <p>Now that we got to the last instructions on the call hierarchy, we can run two more instructions.</p>
 <p>Instruction +21 should revert the stack Base Pointer to the one stored at the beginning of the function.</p>
-<p>pop will copy the value on top of the stack to rbp. Since the stack wasn't used for anything, it contains
+<p>pop will copy the value on top of the stack to rbp and increment rsp. 
+    Since the stack wasn't used for anything, it contains
     the value for the original Base Pointer.
 </p>
 <p>Instruction +22 should use the address at the top of the stack 
@@ -446,7 +447,9 @@ End of assembler dump.
 
 <p>For this example to easily work we will need to turn off some OS protections.</p>
 <p>Don't worry, we will do it in a way that is only temporary. First we need to force the OS
-    to stop randomizing the virtual address so we can reliably reference an address. If Address Space Layout Randomization (ASLR)
+    to stop randomizing the virtual address so we can reliably reference an address. 
+    If <a href="https://en.wikipedia.org/wiki/Address_space_layout_randomization">Address Space 
+        Layout Randomization (ASLR)</a>
      is on (default) the adressess will be different on each execution.
 </p>
 <pre>
@@ -609,7 +612,7 @@ abcdefghijklmnopqrstuvwxyz
     you will find out that 0x66656463 0x6a696867 0x6e6d6c6b 0x7271706f is the value for fedc jihg nmlk rqpo
 </p>
 <p>What is happening is that scanf is not doing any check so as long we keep giving an input, 
-    scanf will keep writing it to the stack, eventually overriding other values. The inpjt is little-endian.
+    scanf will keep writing it to the stack, eventually overriding other values. The input is little-endian.
 </p>
 <p>Now, we know we need to replace nmlk rqpo on our input with the address for our unrelated function and 
     keep the Base Pointer at fedc jihg.</p>
