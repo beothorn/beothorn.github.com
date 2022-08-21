@@ -137,6 +137,7 @@ pre {
 
 footer {
 	display: flex;
+	flex-wrap: wrap;
 	align-items:center;
 	padding-left: 1.1rem;
 }
