@@ -1,12 +1,28 @@
----
-layout: main
-title: Home page
-comments: false
----
-{% for post in site.posts limit: 1 %}
-<div class="post">
-	<h2 class="postTitle"><a class="postTitleLink" href="{{ post.url }}">{{ post.title }}</a></h2>
-	<span class="postDate">{{ post.date | date:"%Y-%m-%d" }}</span>
-	<div class="postText">{{ post.content }} </div>
-</div>
-{% endfor %}
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Is a geek</title>
+	<meta name="keywords" content="" />
+	<meta name="description" content="" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/styles.css" type="text/css"/>
+</head>
+<body id="main-body">
+	<div id="main">
+		<div></div>
+		<div id="main-center">
+			<div id="main-center-content">
+				<p>Hey, this is where I put my stuff online!</p>
+				<a href="./blog.html"><img id="main-logo" src="./assets/mainlogo.png" /></a>
+				<p>You can read some <a href="./blog.html">blogposts here</a>, or check these other places.</p>
+			</div>
+		</div>
+		<div id="main-bottom">
+			<a href="https://github.com/beothorn"><img class="icon-right-side" src ="/assets/img/iconmonstr-github-1.svg"/></a>
+			<a href="https://www.linkedin.com/in/buenolucas/"><img class="icon-right-side" src ="/assets/img/iconmonstr-linkedin-4.svg"/></a>
+			<a href="https://twitter.com/beothorn"><img class="icon-right-side" src ="/assets/img/iconmonstr-twitter-4.svg"/></a>
+		</div>
+		<div></div>
+	</div>
+</body>
+</html>

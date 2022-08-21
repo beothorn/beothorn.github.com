@@ -1,0 +1,12 @@
+---
+layout: blog
+title: Home page
+comments: false
+---
+{% for post in site.posts limit: 1 %}
+<div class="post">
+	<h2 class="postTitle"><a class="postTitleLink" href="{{ post.url }}">{{ post.title }}</a></h2>
+	<span class="postDate">{{ post.date | date:"%Y-%m-%d" }}</span>
+	<div class="postText">{{ post.content }} </div>
+</div>
+{% endfor %}

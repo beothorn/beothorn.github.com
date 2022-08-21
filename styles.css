@@ -9,12 +9,21 @@
 	--border-rad: 0.5rem;
 }
 
-body{
+#blog-body{
 	margin: 2rem auto;
 	max-width: 70rem;
 	line-height: 1.6;
 	font-size: 1rem;
 	color: var(--text-color);
+	background: var(--background-color);
+	background-image: url("/assets/img/prism/prism.png");
+}
+
+#main-body{
+	line-height: 1.6;
+	font-size: 1rem;
+	color: var(--text-color);
+	margin: 0;
 	background: var(--background-color);
 	background-image: url("/assets/img/prism/prism.png");
 }
@@ -135,4 +144,29 @@ footer {
 .icon-footer {
 	width: 2rem;
     height: auto;
+}
+
+#main {
+	display: grid;
+	
+	height: 100%;
+	grid-template-rows: 1fr 1fr 1fr 1fr;
+}
+
+#main-center {
+    align-self: center;
+	background-color: var(--post-background-color);
+}
+
+#main-center-content {
+	padding: 1rem;
+	text-align: center;
+}
+
+#main-logo {
+	width: 20rem;
+}
+
+#main-bottom {
+	justify-self: center;
 }
