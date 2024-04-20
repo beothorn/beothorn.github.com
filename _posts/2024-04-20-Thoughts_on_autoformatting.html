@@ -1,0 +1,37 @@
+---
+title: Thoughts on autoformatting
+layout: singlePost
+comments: true
+---
+<p>
+I am not a fan of automated formatting. Yes, I know the justifications, formatting wars and fights on what is the right or clear way to do it, but, honestly, I don't find those arguments convincing.
+</p>
+<p>
+Let's talk about the first argument, that formatting one way makes the code clearer to read. It's possible for the code to be formatted ambiguously, leading to confusion about whether certain logic should be executed or not.
+I have faced these issues, a couple of times in the past. But that is the thing. It was really only a couple of times, even on projects where uniform code formatting wasn't  required.
+</p>
+<p>
+What does happen, and is very common, is hours and hours spent arguing if a curly brackets should come on the same line as the if or on the next one, or if there should be a space between the conditional and the start of the conditional block.
+Do you know how many times the lack or the inclusion of spaces after the if clause made it harder to read a piece of code? Zero
+</p>
+<p>
+And in my opinion almost all these small nitpicks comes with almost no improvements on code readability. The way conditionals are chained, time complexity and naming usually weights an order of magnitude more on how much time I will spend understanding the source code.
+</p>
+<p>
+Which brings us to the second argument, each person has a favorite formatting scheme and not choosing a single "true way" would cause endless fighting and eternal back-and-forth on pull requests.
+</p>
+<p>
+There is no single way to write a function. There are many equivalent solutions, so, why do we choose to write code the way we do?
+First reason is, obviously, for it to work. Code needs to do what it is supposed to, efficiently. Certainly, this eliminates many possibilities from our set of potential implementations.
+</p>
+<p>
+What is left is up to the developer. The goal then is to have the code written in a way that communicates to the person looking at it exactly what motivated it to be that way and what is the goal it tries to achieve.
+Or, in other words, allow the writer to express themselves to the reader.
+And that is where imposed auto formatting makes its damage.
+</p>
+<p>
+For example, let's the say developer wants to point out that something is just boilerplate, it should be all in one line because it is not really an important part of the logic, but the auto format requires it to take a central piece of your function body, which hides the actual important part. Or, if some piece of data is tabular, or have special indentation because it is actually another language in a string literal. 
+</p>
+<p>
+If the fact that the need for the person writing the code to express meaning is more useful than to have some code conventions followed, then the only discussion you will have on Pull Requests should be if the intent is clear for the intended audience (other devs) as it is. And if the answer is "I understand it but I don't like you did not put a space after the if" then obviously nothing needs to be changed.
+</p>
