@@ -1,0 +1,133 @@
+---
+title: Optionals in Java, what is it for?
+layout: singlePost
+comments: true
+---
+<p>
+I remember when optional was introduced in Java. The idea that was going around was that it was supposed to fix or alleviate the nullpointer issues. 
+At the time I never had contact with any functional language, so when looking at how Optionals were supposed to work, I wasn't impressed.
+</p>
+<pre>
+// One possible way to create an Optional
+String foo = functionThatReturnStringOrNull();
+Optional<String> maybeFoo = Optional.ofNullable(foo);
+</pre>
+
+<p>
+The big issue with null pointers is that you don't expect the value to be null, or else you would check for null right? And optionals were a way to let the caller know null was a valid response (or so I though).
+</p>
+<p>
+To me, optionals looked like an expensive way to tell the caller that returning null. So my solution from that point on was append OrNull to every method call that could return null, and skip Optionals alltogether.
+</p>
+<p>
+Of course, later I learned that this is not exactly why optionals are useful. 
+</p>
+<p>
+It is still very common to see the idea that Optionals are only a way to remind the caller that the value may be empty. 
+But the real utility of Optionals is not just checking for empty values, but giving the tools to deal with these situations without filling your code with null checks.
+</p>
+
+
+<h2>The isPresentGet anti-pattern</h2>
+
+<p>
+Suppose you get an Optional value and you need to unwrap to use it. How do you do it? I think this is the most obvious answer, and the one most will think of:
+</p>
+<pre>
+// Person is a class with a field name, if person exists we get the name or else we return "Unknown"
+Optional&lt;Person&gt; person = getPersonById("123");
+String name;
+if (person.isPresent()) {
+    name = person.get().getName();
+} else {
+    name = "Unknown";
+}
+</pre>
+<p>
+This logic is perfectly acceptable, but it has a minor weakness. There is no guarantee, in compile time, that the value person will be checked.
+In other words, there is no way to ensure get will only be called in case isPresent was called.
+</p>
+<p>
+It is, obvously, a minor issue, but, if the code is going to be written this way, what is the point of using Optionals? One could call the function getPersonByIdOrNull and be done with it.
+</p>
+<p>Is there a way to ensure that getName will never be called on a null value?</p>
+<p>Well, yes there is.</p>
+
+<h2>The functional way</h2>
+
+<p>
+The trick is that instead of checking for null yourself, by calling is present, you pass a function to the Optional that will be only executed if there is a value.
+</p>
+<p>
+You can do it using any of the functions from Optional that receives a function as parameter, although you will usually use map(f).
+</p>
+<p>
+The check for null still happens, but it is done inside the Optional. This is the actual source for the optional:
+</p>
+<pre>
+public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
+    Objects.requireNonNull(mapper);
+    if (!isPresent())
+        return empty();
+    else {
+        return Optional.ofNullable(mapper.apply(value));
+    }
+}
+</pre>
+<p>
+And we can rewrite our previous code as:
+</p>
+<pre>
+Optional&lt;Person&gt; person = getPersonById("123");
+String name = person.map(Person::getName).orElse("Unknown");
+</pre>
+<p>In this example, it is not possible to delete isPresent by mistake. There is no risk of nullpointer here.</p>
+
+<h2>The null check chain</h2>
+
+<p>The previous example has the advantadge of ensuring that the null check is happening. But that is not the only thing that an Optional is good for.</p>
+<p>Imagine a scenario where a sequence of function calls needs to be made over the result of each call. Imagine also that all of them may return null.</p>
+<p>This is one possible way to deal with this case:</p>
+<pre>
+// Get building where Person is located
+Person personByIdOrNull = getPersonById("123"); // This time getPersonById returns a value or null
+if (personByIdOrNull != null) {
+    DetailedInformation detailedInformation = personByIdOrNull.getDetailedInformation();
+    if (detailedInformation != null) {
+        JobRole jobRole = detailedInformation.getJobRole();
+        if (jobRole != null) {
+            String building = getBuildingForRole(jobRole);
+            if (building != null) {
+                return building;
+            } else {
+                return "n/a";
+            }
+        } else {
+          return "n/a";
+        }
+    } else {
+        return "n/a";
+    }
+} else {
+    return "n/a";
+}
+</pre>
+<p>Ugly, but gets the job done.</p>
+<p>We could, instead, pass the responsibility of checking for null to the Optional class.</p>
+<p>The code could look like this:</p>
+<pre>
+Optional&lt;Person&gt; person = Optional.ofNullable(getPersonById("123"));
+return person
+  .map(Person::getDetailedInformation)
+  .map(DetailedInformation::getJobRole)
+  .map(this::getBuildingForRole)
+  .orElse("n/a");
+</pre>
+<p>Those two snippets are equivalent, but in the second one the functions that map the values are really emphasized. Those are the actual important bits of this logic.</p>
+  
+<p>
+In the end, the decision to use optionals in Java boils down to the nature of your code and the semantic meaning of null values. If returning nothing is a valid and expected result in your application logic, 
+then optionals are a powerful tool for representing this absence of a value in a clear and structured manner.
+</p>
+<p>They provide not only safety against null pointers, but also utilities to make the code emphasize the important parts, and not null handling.</p>
+<p>Of course, for this you should avoid using isPresentGet, and use instead map, flatMap, ifPresent and so on.</p>
