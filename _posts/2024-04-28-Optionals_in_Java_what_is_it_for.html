@@ -65,7 +65,7 @@ You can do it using any of the functions from Optional that receives a function 
 The check for null still happens, but it is done inside the Optional. This is the actual source for the optional:
 </p>
 <pre>
-public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
+public&lt;U&gt; Optional&lt;U&gt; map(Function&lt;? super T, ? extends U&gt; mapper) {
     Objects.requireNonNull(mapper);
     if (!isPresent())
         return empty();
