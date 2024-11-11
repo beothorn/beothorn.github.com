@@ -1,0 +1,181 @@
+---
+title: Java Agent from scratch
+layout: singlePost
+comments: true
+---
+<p>
+Java agents are regular java code that can be included when running any java application
+</p>
+<p>
+Java agents are special because they are given access to the Instrumentation API, which allows them to change bytecode.
+</p>
+<h2>Why would you want it?</h2>
+<p>
+When working inside your codebase, you have total freedom. If you need to extend any logic you have many options, such as composition, 
+inheritance, annotation processing at runtime and many other possible solutions. A solution using a Java agent (or any change at bytecode level) is 
+not what you want in this case. 
+</p>
+<p>
+When you need to extend functionality in a library, things start getting a little harder. Sure, library developers plan how to make 
+them open to extension, but it is a fact of life that it is not possible to foresee every possible requirement.
+</p>
+<p>
+Still, there are ways to work with it without writing a java agent. You should use the language features as intended. If not 
+possible you can shadow classes to override behaviour. Another possibility is using a custom classloader that changes bytecode at runtime. 
+</p>
+<p>
+Lastly, you may want extend functionality in third party code. There may be many reasons for that, such as meta analysis, security features 
+or anything that needs to be implemented in a totally separate binary.
+</p>
+<p>
+So, in summary, you want an agent when you want to do runtime analysis of an application or if you need total separation 
+between the regular app and some functionality that changes the bytecode.
+</p>
+<h2>Bytecode manipulation?</h2>
+<p>
+The JVM is an application that interprets a set of operations and a bunch of metadata encoded in a class.
+</p>
+<p>
+Usually, these classes are distributed in files with a .class extension. These classes can then distributed inside a zip file, commonly
+with the .jar extension. Inside this jar, a text file, the Manifest, points to a class file implementing a main function. 
+</p>
+<p>
+You can then just use the java executable to run these JAR files using the -jar argument, such as:"
+<p><pre>java -jar myApp.jar</pre></p>
+</p>
+<p>
+The format of these class files, the bytecode, is described in the java documentation <a href="https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">here</a>
+</p>
+<p>
+Knowing the bytecode format, it becomes possible to modify it. You could open it with a hexeditor, for example, and change the code behaviour.
+</p>
+<p>
+Let`s try an example. This is a simple java code that checks a key and executes some code if the key is correct.
+</p>
+<p>
+<pre>
+public class Test {
+    public static void main(String[] args) {
+        if ("secretpass".equals(args[0])) {
+            System.out.println("Access granted");
+        } else {
+            System.out.println("Access DENIED");
+        }
+    }
+}
+</pre>
+</p>
+<p>Which we can compile and run:</p>
+<p>
+<pre>
+javac Test.java
+java -cp . Test "wrong" # outputs Access DENIED
+java -cp . Test "secretpass" # outputs Access granted
+</pre></p>
+<p>Fortunately, openjdk ships with a disassembler, javap.</p>
+<p>If we use it on Test.class we can see what instructions are being used on it.</p>
+<p><pre>
+    javap -v Test.class 
+
+    ...Some stuff
+      public static void main(java.lang.String[]);
+        descriptor: ([Ljava/lang/String;)V
+        flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+        Code:
+          stack=3, locals=1, args_size=1
+             0: ldc           #7                  // String secretpass
+             2: aload_0
+             3: iconst_0
+             4: aaload
+             5: invokevirtual #9                  // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+             8: ifeq          22
+            11: getstatic     #15                 // Field java/lang/System.out:Ljava/io/PrintStream;
+            14: ldc           #21                 // String Access granted
+            16: invokevirtual #23                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+            19: goto          30
+            22: getstatic     #15                 // Field java/lang/System.out:Ljava/io/PrintStream;
+            25: ldc           #29                 // String Access DENIED
+            27: invokevirtual #23                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+            30: return
+          LineNumberTable:
+            line 3: 0
+            line 4: 11
+            line 6: 22
+            line 8: 30
+          StackMapTable: number_of_entries = 2
+            frame_type = 22 /* same */
+            frame_type = 7 /* same */
+    }
+    SourceFile: "Test.java"    
+</pre></p>
+<p>The important instruction here is the ifeq. From the  <a href="https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">documentation</a></p>
+<p>"An ifeq instruction is type safe iff one can validly pop a type matching int off the incoming operand stack yielding the outgoing type state 
+NextStackFrame, and the operand of the instruction, Target, is a valid branch target assuming an incoming type state of NextStackFrame."</p>
+<p>The other important instruction we need is ifne (if not equals).</p>
+<p>From <a href="https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-7.html">here</a> we can see that ifeq opcode is 0x99 and ifne opcode is 0x9a.</p>
+<p>Using an hex editor we can then just change ifeq to ifne:</p>
+<p><img src="/assets/img/javaAgent1/before.png"/></p>
+<p><img src="/assets/img/javaAgent1/after.png"/></p>
+<p>And now if we run Test with the incorrect key after modifying the bytecode, we get:</p>
+<p><pre>
+java -cp . Test "wrong"
+Access granted
+</pre></p>
+<h2>Changing the bytecode at runtime</h2>
+<p>And this leads us back to what actually is a java agent. A java agent is a class that implements a premain function.</p>
+<p>The premain function gets an argument Instrumetation which allows the agent to get the bytecode as a byte array and change it.</p>
+<p>All you need is a jar file with a manifest pointing to the class containing the premain</p>
+<p>The agent code that does the same thing we did manually would look like this:</p>
+<p><pre>
+public class Agent {
+
+    public static void premain(
+        String agentArgs,
+        Instrumentation instrumentation
+    ){
+        instrumentation.addTransformer(new ClassFileTransformer() {
+            @Override
+            public byte[] transform(
+                    ClassLoader loader,
+                    String className,
+                    Class<?> classBeingRedefined,
+                    ProtectionDomain protectionDomain,
+                    byte[] classFile
+            ) {
+                byte[] newBytecode = new byte[classFile.length];
+                if (className.contains("Test")) {
+                    for (int i = 0; i < classFile.length; i++) {
+                        if (i == 0x1f5) {
+                            newBytecode[i] = (byte) 0x9A;
+                        } else {
+                            newBytecode[i] = classFile[i];
+                        }
+                    }
+                    return newBytecode;
+                }
+                return null;
+            }
+        });
+    }
+}
+</pre></p>
+<p>The manifest should look like this:</p>
+<p><pre>
+Manifest-Version: 1.0
+Premain-Class: com.github.beothorn.Agent
+</pre></p>
+<p>And to execute it, you just need to pass the javaagent argument</p>
+<p><pre>
+java -javaagent:./agent.jar -cp . Test "wrong"
+Access granted    
+</pre></p>
+<p>Here you can see an example of <href a="https://github.com/beothorn/JavaAgentDisassembler">an example of an agent that partially disassembles classes</href></p>
+<h2>Doing it in real life</h2>
+<p>This is just an example to give the general idea of what an agent does. In real life it would be a lot of work to interpret and rewrite bytecode like this.</p>
+<p>Instead, you can use a library that does the bytecode transformation for you.</p>
+<p>You can choose ASM if you want low level bytecode manipulation. If you prefer something that is easier to use and mostly protects you from going into 
+instruction level, a great option is using <a href="https://bytebuddy.net">bytebuddy</a>.
+</p>
+<p>In upcoming blog entries, I will provide examples of how to use Byte Buddy for different tasks.</p>
+<p>I will also show how it was used to create <a href="">Javaflame</a> and maybe if you really need to build your own agent 
+    or Javaflame already solver the issue.</p>
