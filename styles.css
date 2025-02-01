@@ -171,3 +171,32 @@ footer {
 #main-bottom {
 	justify-self: center;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--post-background-color);
+    color: var(--text-color);
+    border-radius: var(--border-rad);
+    overflow: hidden;
+}
+
+th, td {
+    border: 1px solid var(--lighter-text-color);
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: var(--background-color);
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
